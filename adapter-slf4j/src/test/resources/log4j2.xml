@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="ConsoleNormal" target="SYSTEM_OUT">
+      <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} %msg%n}{INFO=yellow}"/>
+      <MarkerFilter marker="AUDIT" onMatch="ACCEPT" onMismatch="DENY"/>
+    </Console>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%highlight{%d{HH:mm:ss.SSS} %-5level %logger{1}#%M:%L - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=blue, DEBUG=green bold, TRACE=black}"/>
+      <MarkerFilter marker="AUDIT" onMatch="DENY" onMismatch="ACCEPT"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="ConsoleNormal"/>
+    </Root>
+  </Loggers>
+</Configuration>

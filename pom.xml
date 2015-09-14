@@ -29,6 +29,7 @@
   <properties>
     <codesystemutil.version>1.0</codesystemutil.version>
     <jodatime.version>2.8.2</jodatime.version>
+    <slf4j.version>1.7.12</slf4j.version>
 
     <scm.url>scm:git:git@git.lable.org:lable/rfc3881auditlogger.git</scm.url>
   </properties>
@@ -58,6 +59,11 @@
       <dependency>
         <groupId>org.lable.rfc3881.auditlogger.definitions</groupId>
         <artifactId>rfc3881</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.lable.rfc3881.auditlogger</groupId>
+        <artifactId>api</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>
