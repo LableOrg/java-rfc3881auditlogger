@@ -37,7 +37,7 @@ public class LogEntryTest {
                 )
         );
 
-        // Test that there are nu NPEs and such.
+        // Test that there are no NPEs and such.
         assertThat(logEntry.toString(), is(not("")));
 
         System.out.println(logEntry);

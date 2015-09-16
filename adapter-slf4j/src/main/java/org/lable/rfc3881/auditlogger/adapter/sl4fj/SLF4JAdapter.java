@@ -10,14 +10,23 @@ import org.slf4j.MarkerFactory;
  * Simply log the output of {@link LogEntry#toString()} to the logger. This class is meant for debugging and testing.
  */
 public class SLF4JAdapter implements AuditLogAdapter {
+    /**
+     * Name of the marker passed to the logger. If the logging implementation chosen supports markers, the audit
+     * messages can be filtered with it.
+     */
+    public static final String LOG_MARKER = "AUDIT";
+
     final Logger logger = LoggerFactory.getLogger(SLF4JAdapter.class);
 
     public SLF4JAdapter() {
-        logger.info("SLF4JAdapter created.");
+        logger.info("SLF4JAdapter created. Audit events will be logged with marker '" + LOG_MARKER + "'.");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void record(LogEntry logEntry) {
-        logger.info(MarkerFactory.getMarker("AUDIT"), logEntry.toString());
+        logger.info(MarkerFactory.getMarker(LOG_MARKER), logEntry.toString());
     }
 }
