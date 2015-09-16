@@ -8,12 +8,14 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.lable.rfc3881.auditlogger.adapter</groupId>
-  <artifactId>slf4j</artifactId>
+  <artifactId>serialization</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>IETF/RFC 3881 Audit Logger :: Adapter:SLF4J</name>
+  <name>IETF/RFC 3881 Audit Logger :: JSON serialization</name>
+  <description>
+    JSON serialization classes.
+  </description>
 
   <dependencies>
     <!-- Project dependencies. -->
@@ -24,22 +26,17 @@
 
     <!-- External dependencies. -->
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-joda</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
 
     <!-- Testing dependencies. -->
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>${log4j.version}</version>
-    </dependency>
   </dependencies>
 
   <build>

@@ -125,7 +125,6 @@ public class LogEntry {
 
     @Override
     public String toString() {
-
         return "AUDIT EVENT\n" +
                 "--------------------------------------------\n" +
                 "[[   event   ]]:\n" +
