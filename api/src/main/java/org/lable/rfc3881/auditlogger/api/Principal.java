@@ -1,9 +1,11 @@
 package org.lable.rfc3881.auditlogger.api;
 
 
+import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.collectionMayNotBeNullOrEmpty;
@@ -13,7 +15,7 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * Security identity of a user or automated process. This includes the relevant security roles for the action that
  * was performed.
  */
-public class Principal {
+public class Principal implements Identifiable {
     /* Required fields. */
 
     /**
@@ -88,6 +90,14 @@ public class Principal {
 
     public String getAlternateUserId() {
         return alternateUserId;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> identifyingStack() {
+        return Collections.singletonList(getUserId());
     }
 
     @Override

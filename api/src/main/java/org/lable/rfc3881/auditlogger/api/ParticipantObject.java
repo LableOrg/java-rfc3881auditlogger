@@ -1,15 +1,14 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import org.lable.codesystem.codereference.Applicable;
+import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.DataLifeCycle;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectIDType;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectType;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectTypeRole;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
 
@@ -18,7 +17,7 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in RFC 3881 §5.5  Participant Object Identification.
  */
-public class ParticipantObject {
+public class ParticipantObject implements Identifiable {
     /* Required fields. */
 
     /**
@@ -200,12 +199,37 @@ public class ParticipantObject {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> identifyingStack() {
+        List<String> parts = new ArrayList<>(getIdType().toCodeReference().identifyingStack());
+        parts.add(getId());
+        return parts;
+    }
+
+    @Override
+    public String toString() {
+        return "ID:          " + getId() +
+                "\nID type:     " + getIdType() +
+                (getType() == null ? "" : "\nType:        " + getType()) +
+                (getTypeRole() == null ? "" : "\nType role:   " + getTypeRole()) +
+                (getDataLifeCycle() == null ? "" : "\nLife cycle:  " + getDataLifeCycle()) +
+                (getSensitivity() == null ? "" : "\nSensitivity: " + getSensitivity()) +
+                (getName() == null ? "" : "\nName:        " + getName()) +
+                (getQuery() == null || getQuery().length == 0
+                        ? "" : "\nQuery:       " + getQuery().length + " bytes set") +
+                (getDetails() == null ? "" : "\nDetails:     " + getDetails().keySet());
+    }
+
+    /**
      * A type/value pair that describes additional details about a {@link ParticipantObject}.
      * <p>
      * The byte value of this class may be interpreted by audit log analyzers at a later stage.
      */
     public static class Detail {
         final Referenceable type;
+
         final byte[] value;
 
         /**
@@ -226,24 +250,9 @@ public class ParticipantObject {
         public byte[] getValue() {
             return value;
         }
-
         @Override
         public String toString() {
             return getType().toCodeReference().toString();
         }
-    }
-
-    @Override
-    public String toString() {
-        return "ID:          " + getId() +
-                "\nID type:     " + getIdType() +
-                (getType() == null ? "" : "\nType:        " + getType()) +
-                (getTypeRole() == null ? "" : "\nType role:   " + getTypeRole()) +
-                (getDataLifeCycle() == null ? "" : "\nLife cycle:  " + getDataLifeCycle()) +
-                (getSensitivity() == null ? "" : "\nSensitivity: " + getSensitivity()) +
-                (getName() == null ? "" : "\nName:        " + getName()) +
-                (getQuery() == null || getQuery().length == 0
-                        ? "" : "\nQuery:       " + getQuery().length + " bytes set") +
-                (getDetails() == null ? "" : "\nDetails:     " + getDetails().keySet());
     }
 }

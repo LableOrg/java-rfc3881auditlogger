@@ -1,8 +1,11 @@
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.AuditSourceType;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +20,7 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p/>
  * Defined in RFC 3881 §5.4. Audit Source Identification.
  */
-public class AuditSource {
+public class AuditSource implements Identifiable {
     /* Required fields. */
 
     /**
@@ -85,6 +88,14 @@ public class AuditSource {
 
     public List<Referenceable> getTypeCodes() {
         return typeCodes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> identifyingStack() {
+        return Arrays.asList(getEnterpriseSiteId(), getId());
     }
 
     @Override

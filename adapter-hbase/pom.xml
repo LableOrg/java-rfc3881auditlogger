@@ -33,6 +33,10 @@
       <version>${slf4j.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.lable.oss.bitsandbytes</groupId>
+      <artifactId>bitsandbytes</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
       <version>${hbase.version}</version>

@@ -1,6 +1,11 @@
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.codesystem.codereference.Identifiable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.NetworkAccessPointType;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
 
@@ -9,7 +14,7 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in IETF/RFC 3881 §5.3. Network Access Point Identification.
  */
-public class NetworkAccessPoint {
+public class NetworkAccessPoint implements Identifiable {
     /**
      * An identifier for the type of network access point that originated the audit event.
      * <p>
@@ -69,6 +74,16 @@ public class NetworkAccessPoint {
 
     public String getId() {
         return id;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> identifyingStack() {
+        List<String> parts = new ArrayList<>(getType().toCodeReference().identifyingStack());
+        parts.add(getId());
+        return parts;
     }
 
     @Override
