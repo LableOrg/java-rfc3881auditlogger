@@ -37,12 +37,11 @@ public class HBaseAdapterTest {
     }
 
     @Test
-    @Ignore
     public void recordTest() throws IOException {
-        AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event_snappy", "a");
+        AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event", "a");
 
         Instant instant = Instant.now();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1; i++) {
             instant = instant.plus(1);
             LogEntry logEntry = new LogEntry(
                     new Event(new CodeReference("events", "logon", "log-on"),
@@ -81,7 +80,8 @@ public class HBaseAdapterTest {
                                     null,
                                     "Test",
                                     null)
-                    )
+                    ),
+                    new CodeReference("version", "1", "1")
             );
 
             auditLogAdapter.record(logEntry);

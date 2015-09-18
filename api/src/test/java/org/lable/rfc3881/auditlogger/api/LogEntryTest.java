@@ -34,7 +34,8 @@ public class LogEntryTest {
                                         new CodeReference("detail", "DT1", "Detail 1"),
                                         new byte[0]
                                 ))
-                )
+                ),
+                new CodeReference("version", "1", "1")
         );
 
         // Test that there are no NPEs and such.

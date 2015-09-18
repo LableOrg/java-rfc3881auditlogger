@@ -62,6 +62,7 @@ public class HBaseAdapter implements AuditLogAdapter {
             addIfNotNull(put, "principal", logEntry.getParticipatingPrincipals());
             addIfNotNull(put, "source", logEntry.getAuditSources());
             addIfNotNull(put, "object", logEntry.getParticipantObjects());
+            addIfNotNull(put, "version", logEntry.getVersion());
             auditTable.put(put);
         }
     }

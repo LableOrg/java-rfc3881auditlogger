@@ -1,5 +1,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.codesystem.codereference.Referenceable;
+
 import java.util.List;
 
 /**
@@ -58,13 +60,24 @@ public class LogEntry {
      */
     List<ParticipantObject> participantObjects;
 
+    /**
+     * Version of the audit logging implementation. Can be used to track the current implementation of
+     * your audit logging. This may be useful when audit logging is gradually implemented or periodically reviewed,
+     * and the breadth and scope of what is logged changes. Versioning the current status of implementation may aid
+     * in the analysis of audit logs at a later date.
+     * <p>
+     * This optional field is not part of RFC 3881.
+     */
+    Referenceable version;
+
     public LogEntry(Event event,
                     Principal requestor,
                     Principal delegator,
                     List<Principal> participatingPrincipals,
                     NetworkAccessPoint networkAccessPoint,
                     List<AuditSource> auditSources,
-                    List<ParticipantObject> participantObjects) {
+                    List<ParticipantObject> participantObjects,
+                    Referenceable version) {
         this.event = event;
         this.requestor = requestor;
         this.delegator = delegator;
@@ -72,6 +85,7 @@ public class LogEntry {
         this.networkAccessPoint = networkAccessPoint;
         this.auditSources = auditSources;
         this.participantObjects = participantObjects;
+        this.version = version;
     }
 
     /**
@@ -123,6 +137,13 @@ public class LogEntry {
         return participantObjects;
     }
 
+    /**
+     * @return The current version of the audit log implementation ({@link #version}).
+     */
+    public Referenceable getVersion() {
+        return version;
+    }
+
     @Override
     public String toString() {
         return "AUDIT EVENT\n" +
@@ -140,6 +161,8 @@ public class LogEntry {
                 join(getAuditSources()) + "\n" +
                 "[[   participant objects   ]]:\n" +
                 join(getParticipantObjects()) + "\n" +
+                "[[   version   ]]:\n" +
+                (getVersion() == null ? "unknown" : getVersion() + "\n") +
                 "--------------------------------------------";
     }
 

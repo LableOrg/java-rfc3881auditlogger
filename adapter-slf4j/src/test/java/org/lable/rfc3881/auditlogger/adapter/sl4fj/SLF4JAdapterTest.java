@@ -44,7 +44,8 @@ public class SLF4JAdapterTest {
                                         new CodeReference("detail", "DT1", "Detail 1"),
                                         new byte[0]
                                 ))
-                )
+                ),
+                new CodeReference("version", "1", "1")
         );
 
         auditLogAdapter.record(logEntry);
