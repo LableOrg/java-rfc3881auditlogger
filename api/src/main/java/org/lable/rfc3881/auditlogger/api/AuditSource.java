@@ -5,8 +5,6 @@ import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.AuditSourceType;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -49,15 +47,6 @@ public class AuditSource implements Identifiable, Serializable {
      * IETF/RFC 3881 §5.4.3. Audit Source Type Code
      */
     final List<Referenceable> typeCodes;
-
-    /**
-     * Define an audit source of an unknown type.
-     *
-     * @param id Identifier.
-     */
-    public AuditSource(String id) {
-        this(null, id);
-    }
 
     /**
      * Define an audit source. The type codes defined in {@link AuditSourceType} can be used here to specify the type
