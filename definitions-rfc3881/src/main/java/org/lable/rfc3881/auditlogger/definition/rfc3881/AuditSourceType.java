@@ -47,7 +47,7 @@ public enum AuditSourceType implements Referenceable {
     EXTERNAL_UNKNOWN_OR_OTHER("9", "External source, other or unknown type");
 
     private final String code;
-    private String displayName;
+    private final String displayName;
 
     AuditSourceType(String code, String displayName) {
         this.code = code;

@@ -6,6 +6,9 @@ import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.events.AuditAdministrationEvent;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.events.SecurityAdministrationEvent;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.events.UserAccessEvent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -57,26 +60,47 @@ public class Event {
     final List<Referenceable> types;
 
     /**
-     * Define an audit event that took place just now.
+     * Define an audit administration audit event that took place just now.
      *
-     * @param id           Identifier.
+     * @param id           Audit administration event identifier.
      * @param eventAction  Audit action.
      * @param eventOutcome Outcome of the event.
      */
-    public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome) {
+    public Event(AuditAdministrationEvent id, EventAction eventAction, EventOutcome eventOutcome) {
+        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
+    }
+
+    /**
+     * Define a security administration audit event that took place just now.
+     *
+     * @param id           Security administration  event identifier.
+     * @param eventAction  Audit action.
+     * @param eventOutcome Outcome of the event.
+     */
+    public Event(SecurityAdministrationEvent id, EventAction eventAction, EventOutcome eventOutcome) {
+        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
+    }
+
+    /**
+     * Define a user access audit event that took place just now.
+     *
+     * @param id           User access event identifier.
+     * @param eventAction  Audit action.
+     * @param eventOutcome Outcome of the event.
+     */
+    public Event(UserAccessEvent id, EventAction eventAction, EventOutcome eventOutcome) {
         this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
     }
 
     /**
      * Define an audit event that took place just now.
      *
-     * @param id           Identifier.
+     * @param id           Event identifier.
      * @param eventAction  Audit action.
      * @param eventOutcome Outcome of the event.
-     * @param types        Event classification.
      */
-    public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome, Referenceable... types) {
-        this(id, eventAction, Instant.now(), eventOutcome, types);
+    public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome) {
+        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
     }
 
     /**
