@@ -1,5 +1,6 @@
 package org.lable.rfc3881.auditlogger.serialization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.junit.Test;
@@ -27,6 +28,60 @@ public class ReferenceableSerializerTest {
                 "\"csn\":\"CodeSystem\"," +
                 "\"dn\":\"One\"," +
                 "\"ot\":\"ONE\"" +
+                "}"));
+    }
+
+    @Test
+    public void nullFieldTest() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        objectMapper.registerModule(new ReferenceableSerializerModule());
+
+        CodeReference codeReference = new CodeReference("CS", "001", "One");
+
+        String result = objectMapper.writeValueAsString(codeReference);
+
+        assertThat(result, is("{" +
+                "\"cs\":\"CS\"," +
+                "\"code\":\"001\"," +
+                "\"dn\":\"One\"" +
+                "}"));
+    }
+
+    @Test
+    public void nullFieldAlwaysTest() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
+        objectMapper.registerModule(new ReferenceableSerializerModule());
+
+        CodeReference codeReference = new CodeReference("CS", "", "001", "One", null);
+
+        String result = objectMapper.writeValueAsString(codeReference);
+
+        assertThat(result, is("{" +
+                "\"cs\":\"CS\"," +
+                "\"code\":\"001\"," +
+                "\"csn\":\"\"," +
+                "\"dn\":\"One\"," +
+                "\"ot\":null" +
+                "}"));
+    }
+
+    @Test
+    public void nullFieldAllowEmptyTest() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.registerModule(new ReferenceableSerializerModule());
+
+        CodeReference codeReference = new CodeReference("CS", "", "001", "One");
+
+        String result = objectMapper.writeValueAsString(codeReference);
+
+        assertThat(result, is("{" +
+                "\"cs\":\"CS\"," +
+                "\"code\":\"001\"," +
+                "\"csn\":\"\"," +
+                "\"dn\":\"One\"" +
                 "}"));
     }
 

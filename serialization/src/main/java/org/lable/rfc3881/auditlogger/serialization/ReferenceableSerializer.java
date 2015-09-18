@@ -19,14 +19,33 @@ public class ReferenceableSerializer extends JsonSerializer<Referenceable> {
         // using the name of an enum implementing Referenceable.
         if (value instanceof CodeReference) {
             generator.writeStartObject();
-            generator.writeStringField("cs", ((CodeReference) value).getCodeSystem());
-            generator.writeStringField("code", ((CodeReference) value).getCode());
-            generator.writeStringField("csn", ((CodeReference) value).getCodeSystemName());
-            generator.writeStringField("dn", ((CodeReference) value).getDisplayName());
-            generator.writeStringField("ot", ((CodeReference) value).getOriginalText());
+            writeField(generator, provider, "cs", ((CodeReference) value).getCodeSystem());
+            writeField(generator, provider, "code", ((CodeReference) value).getCode());
+            writeField(generator, provider, "csn", ((CodeReference) value).getCodeSystemName());
+            writeField(generator, provider, "dn", ((CodeReference) value).getDisplayName());
+            writeField(generator, provider, "ot", ((CodeReference) value).getOriginalText());
             generator.writeEndObject();
         } else {
             provider.defaultSerializeValue(value.toCodeReference(), generator);
         }
+    }
+
+    void writeField(JsonGenerator generator, SerializerProvider provider, String name, String value)
+            throws IOException {
+        switch (provider.getConfig().getSerializationInclusion()) {
+            case NON_NULL:
+            case NON_ABSENT:
+                if (value == null) return;
+                break;
+            case NON_EMPTY:
+                if (value == null || value.isEmpty()) return;
+                break;
+            default:
+            case ALWAYS:
+                // Allow.
+                break;
+        }
+
+        generator.writeStringField(name, value);
     }
 }
