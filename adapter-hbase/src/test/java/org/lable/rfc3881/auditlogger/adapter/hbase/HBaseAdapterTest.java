@@ -5,8 +5,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.joda.time.Instant;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
@@ -22,69 +20,61 @@ import static org.junit.Assert.assertThat;
 import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.referenceableToBytes;
 
 public class HBaseAdapterTest {
-    static HConnection hConnection;
-
-    @BeforeClass
-    public static void setup() throws IOException {
+    @Test
+    @Ignore
+    public void recordTest() throws IOException {
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
-        hConnection = HConnectionManager.createConnection(conf);
-    }
+        try (HConnection hConnection = HConnectionManager.createConnection(conf)) {
 
-    @AfterClass
-    public static void tearDown() throws IOException {
-        hConnection.close();
-    }
+            AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event", "a");
 
-    @Test
-    public void recordTest() throws IOException {
-        AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event", "a");
+            Instant instant = Instant.now();
+            for (int i = 0; i < 1; i++) {
+                instant = instant.plus(1);
+                LogEntry logEntry = new LogEntry(
+                        new Event(new CodeReference("events", "logon", "log-on"),
+                                EventAction.EXECUTE, instant, EventOutcome.SUCCESS),
+                        new Principal("bob", null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
+                        new Principal("john", null, "John Jones", new CodeReference("roles", "user", "authenticated user")),
+                        Arrays.asList(
+                                new Principal("alice", null, "Alice Jones",
+                                        new CodeReference("roles", "user", "authenticated user")),
+                                new Principal("claire", null, "Claire Jones",
+                                        new CodeReference("roles", "user", "authenticated user"))
+                        ),
+                        NetworkAccessPoint.byIPAddress("127.0.0.1"),
+                        Arrays.asList(
+                                new AuditSource("servercluster1", "tomcat1", AuditSourceType.WEB_SERVER_PROCESS),
+                                new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
+                        ),
+                        Arrays.asList(
+                                new ParticipantObject("bob",
+                                        ParticipantObjectType.PERSON,
+                                        ParticipantObjectIDType.USER_IDENTIFIER,
+                                        ParticipantObjectTypeRole.USER,
+                                        DataLifeCycle.ACCESS_OR_USE,
+                                        new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
+                                        "Bob Jones",
+                                        "TEST".getBytes(),
+                                        new ParticipantObject.Detail(
+                                                new CodeReference("detail", "DT1", "Detail 1"),
+                                                new byte[0]
+                                        )),
+                                new ParticipantObject("test",
+                                        ParticipantObjectType.SYSTEM_OBJECT,
+                                        ParticipantObjectIDType.REPORT_NAME,
+                                        ParticipantObjectTypeRole.DATA_REPOSITORY,
+                                        DataLifeCycle.ACCESS_OR_USE,
+                                        null,
+                                        "Test",
+                                        null)
+                        ),
+                        new CodeReference("version", "1", "1")
+                );
 
-        Instant instant = Instant.now();
-        for (int i = 0; i < 1; i++) {
-            instant = instant.plus(1);
-            LogEntry logEntry = new LogEntry(
-                    new Event(new CodeReference("events", "logon", "log-on"),
-                            EventAction.EXECUTE, instant, EventOutcome.SUCCESS),
-                    new Principal("bob", null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
-                    new Principal("john", null, "John Jones", new CodeReference("roles", "user", "authenticated user")),
-                    Arrays.asList(
-                            new Principal("alice", null, "Alice Jones",
-                                    new CodeReference("roles", "user", "authenticated user")),
-                            new Principal("claire", null, "Claire Jones",
-                                    new CodeReference("roles", "user", "authenticated user"))
-                    ),
-                    NetworkAccessPoint.byIPAddress("127.0.0.1"),
-                    Arrays.asList(
-                            new AuditSource("servercluster1", "tomcat1", AuditSourceType.WEB_SERVER_PROCESS),
-                            new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
-                    ),
-                    Arrays.asList(
-                            new ParticipantObject("bob",
-                                    ParticipantObjectType.PERSON,
-                                    ParticipantObjectIDType.USER_IDENTIFIER,
-                                    ParticipantObjectTypeRole.USER,
-                                    DataLifeCycle.ACCESS_OR_USE,
-                                    new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
-                                    "Bob Jones",
-                                    "TEST".getBytes(),
-                                    new ParticipantObject.Detail(
-                                            new CodeReference("detail", "DT1", "Detail 1"),
-                                            new byte[0]
-                                    )),
-                            new ParticipantObject("test",
-                                    ParticipantObjectType.SYSTEM_OBJECT,
-                                    ParticipantObjectIDType.REPORT_NAME,
-                                    ParticipantObjectTypeRole.DATA_REPOSITORY,
-                                    DataLifeCycle.ACCESS_OR_USE,
-                                    null,
-                                    "Test",
-                                    null)
-                    ),
-                    new CodeReference("version", "1", "1")
-            );
-
-            auditLogAdapter.record(logEntry);
+                auditLogAdapter.record(logEntry);
+            }
         }
     }
 
