@@ -4,6 +4,7 @@ package org.lable.rfc3881.auditlogger.api;
 import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +16,9 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * Security identity of a user or automated process. This includes the relevant security roles for the action that
  * was performed.
  */
-public class Principal implements Identifiable {
+public class Principal implements Identifiable, Serializable {
+    private static final long serialVersionUID = -7367595173448586271L;
+
     /* Required fields. */
 
     /**

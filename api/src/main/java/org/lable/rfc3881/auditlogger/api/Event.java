@@ -10,6 +10,7 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.events.AuditAdministrati
 import org.lable.rfc3881.auditlogger.definition.rfc3881.events.SecurityAdministrationEvent;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.events.UserAccessEvent;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,7 +19,9 @@ import java.util.List;
  * <p>
  * Defined in IETF/RFC 3881 §5.1. Event Identification.
  */
-public class Event {
+public class Event implements Serializable {
+    private static final long serialVersionUID = 3890563908827120988L;
+
     /* Required fields. */
 
     /**

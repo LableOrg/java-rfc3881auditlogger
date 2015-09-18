@@ -4,6 +4,7 @@ import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.AuditSourceType;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +21,9 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p/>
  * Defined in RFC 3881 §5.4. Audit Source Identification.
  */
-public class AuditSource implements Identifiable {
+public class AuditSource implements Identifiable, Serializable {
+    private static final long serialVersionUID = 1287102005812178285L;
+
     /* Required fields. */
 
     /**

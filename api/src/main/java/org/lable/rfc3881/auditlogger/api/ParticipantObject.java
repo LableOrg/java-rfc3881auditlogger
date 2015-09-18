@@ -8,6 +8,7 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectIDType;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectType;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectTypeRole;
 
+import java.io.Serializable;
 import java.util.*;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
@@ -17,7 +18,9 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in RFC 3881 §5.5  Participant Object Identification.
  */
-public class ParticipantObject implements Identifiable {
+public class ParticipantObject implements Identifiable, Serializable {
+    private static final long serialVersionUID = 2395902234146300877L;
+
     /* Required fields. */
 
     /**
