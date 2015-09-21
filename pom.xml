@@ -1,4 +1,22 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!--
+
+    Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -36,14 +54,29 @@
 
     <!-- Testing dependencies. -->
     <log4j.version>2.3</log4j.version>
-
-    <scm.url>scm:git:git@git.lable.org:lable/rfc3881auditlogger.git</scm.url>
   </properties>
 
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>jdhoek</id>
+      <name>Jeroen Hoek</name>
+      <email>jeroen.hoek@lable.nl</email>
+      <organization>Lable</organization>
+      <organizationUrl>http://lable.nl</organizationUrl>
+    </developer>
+  </developers>
+
   <scm>
-    <connection>${scm.url}</connection>
-    <url>${scm.url}</url>
-    <developerConnection>${scm.url}</developerConnection>
+    <connection>scm:git:git@github.com:LableOrg/java-rfc3881auditlogger.git</connection>
+    <developerConnection>scm:git:git@github.com:LableOrg/java-rfc3881auditlogger.git</developerConnection>
+    <url>https://github.com/LableOrg/java-rfc3881auditlogger</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -84,4 +117,22 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>
