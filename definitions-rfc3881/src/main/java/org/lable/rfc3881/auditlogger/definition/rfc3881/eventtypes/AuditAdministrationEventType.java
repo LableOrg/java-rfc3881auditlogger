@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lable.rfc3881.auditlogger.definition.rfc3881.events;
+package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 
 /**
- * A set of audit event actions related to access and administration of the audit log itself.
+ * A set of audit event types related to access and administration of the audit log itself.
  * <p/>
  * Defined by IETF/RFC 3881 §4.2. Audit Administration and Data Access.
  */
-public enum AuditAdministrationEvent implements Referenceable {
+public enum AuditAdministrationEventType implements Referenceable {
     /**
      * Changes in the configuration of which events are or are not logged to the audit log.
      * <p>
@@ -38,14 +38,14 @@ public enum AuditAdministrationEvent implements Referenceable {
      * <p>
      * This event should always be audited.
      * <p>
-     * This event combines IETF/RFC 3881 §4.2.2 (viewing) and §4.2.3 (modification or deletion); distinction is made by
-     * supplying {@link EventAction} to the event instance.
+     * This event type combines IETF/RFC 3881 §4.2.2 (viewing) and §4.2.3 (modification or deletion); distinction is
+     * made by supplying {@link EventAction} to the event instance.
      */
     AUDIT_DATA_ACCESS("Audit Data Access");
 
     private final String displayName;
 
-    AuditAdministrationEvent(String displayName) {
+    AuditAdministrationEventType(String displayName) {
         this.displayName = displayName;
     }
 

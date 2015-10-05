@@ -17,13 +17,13 @@ package org.lable.rfc3881.auditlogger.api;
 
 import org.joda.time.Instant;
 import org.joda.time.format.ISODateTimeFormat;
-import org.lable.codesystem.codereference.CodeReference;
+import org.lable.codesystem.codereference.Categorizable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome;
-import org.lable.rfc3881.auditlogger.definition.rfc3881.events.AuditAdministrationEvent;
-import org.lable.rfc3881.auditlogger.definition.rfc3881.events.SecurityAdministrationEvent;
-import org.lable.rfc3881.auditlogger.definition.rfc3881.events.UserAccessEvent;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.AuditAdministrationEventType;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.SecurityAdministrationEventType;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEventType;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -78,57 +78,45 @@ public class Event implements Serializable {
     final List<Referenceable> types;
 
     /**
-     * Define an audit administration audit event that took place just now.
-     *
-     * @param id           Audit administration event identifier.
-     * @param eventAction  Audit action.
-     * @param eventOutcome Outcome of the event.
-     */
-    public Event(AuditAdministrationEvent id, EventAction eventAction, EventOutcome eventOutcome) {
-        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
-    }
-
-    /**
-     * Define a security administration audit event that took place just now.
-     *
-     * @param id           Security administration  event identifier.
-     * @param eventAction  Audit action.
-     * @param eventOutcome Outcome of the event.
-     */
-    public Event(SecurityAdministrationEvent id, EventAction eventAction, EventOutcome eventOutcome) {
-        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
-    }
-
-    /**
-     * Define a user access audit event that took place just now.
-     *
-     * @param id           User access event identifier.
-     * @param eventAction  Audit action.
-     * @param eventOutcome Outcome of the event.
-     */
-    public Event(UserAccessEvent id, EventAction eventAction, EventOutcome eventOutcome) {
-        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
-    }
-
-    /**
      * Define an audit event that took place just now.
+     * <p>
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
+     * lot of event types the event-id will be something defined within your projects.
+     * <p>
+     * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
+     * types to an event to help categorize it.
      *
      * @param id           Event identifier.
      * @param eventAction  Audit action.
      * @param eventOutcome Outcome of the event.
+     * @param types        Event classification.
+     * @see AuditAdministrationEventType
+     * @see SecurityAdministrationEventType
+     * @see UserAccessEventType
      */
-    public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome) {
-        this(id, eventAction, Instant.now(), eventOutcome, new CodeReference[0]);
+    public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome, Referenceable... types) {
+        this(id, eventAction, Instant.now(), eventOutcome, types);
     }
 
     /**
      * Define an audit event.
+     * <p>
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
+     * lot of event types the event-id will be something defined within your projects.
+     * <p>
+     * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
+     * types to an event to help categorize it.
      *
      * @param id           Identifier.
      * @param eventAction  Audit action.
      * @param happenedAt   When this event took place.
      * @param eventOutcome Outcome of the event.
      * @param types        Event classification.
+     * @see AuditAdministrationEventType
+     * @see SecurityAdministrationEventType
+     * @see UserAccessEventType
      */
     public Event(Referenceable id, EventAction eventAction, Instant happenedAt, EventOutcome eventOutcome,
                  Referenceable... types) {
@@ -137,6 +125,30 @@ public class Event implements Serializable {
         this.happenedAt = happenedAt;
         this.eventOutcome = eventOutcome;
         this.types = Arrays.asList(types);
+    }
+
+    /**
+     * Define an audit event with a {@link Categorizable} event-id. This type of event-id knows which event types it is
+     * classified under.
+     * <p>
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
+     * lot of event types the event-id will be something defined within your projects.
+     * <p>
+     * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
+     * types to an event to help categorize it.
+     *
+     * @param id           Identifier with event type association.
+     * @param eventAction  Audit action.
+     * @param happenedAt   When this event took place.
+     * @param eventOutcome Outcome of the event.
+     */
+    public Event(Categorizable id, EventAction eventAction, Instant happenedAt, EventOutcome eventOutcome) {
+        this.id = id;
+        this.eventAction = eventAction;
+        this.happenedAt = happenedAt;
+        this.eventOutcome = eventOutcome;
+        this.types = id.categorizedUnder();
     }
 
     /**

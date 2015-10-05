@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lable.rfc3881.auditlogger.definition.rfc3881.events;
+package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.junit.Test;
-import org.lable.rfc3881.auditlogger.definition.rfc3881.AuditSourceType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,26 +23,26 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
-public class SecurityAdministrationEventTest {
+public class SecurityAdministrationEventTypeTest {
     @Test
     public void uniquenessTest() {
         // Verify that all codes and display names defined are unique within this enumerator.
         Set<String> codes = new HashSet<>();
         Set<String> displayNames = new HashSet<>();
 
-        for (SecurityAdministrationEvent event : SecurityAdministrationEvent.values()) {
+        for (SecurityAdministrationEventType event : SecurityAdministrationEventType.values()) {
             codes.add(event.getCode());
             displayNames.add(event.getDisplayName());
         }
 
-        assertThat(codes.size(), is(SecurityAdministrationEvent.values().length));
-        assertThat(displayNames.size(), is(SecurityAdministrationEvent.values().length));
+        assertThat(codes.size(), is(SecurityAdministrationEventType.values().length));
+        assertThat(displayNames.size(), is(SecurityAdministrationEventType.values().length));
     }
 
     @Test
     public void toStringTest() {
         // Defer to CodeReference for toString.
-        for (SecurityAdministrationEvent event : SecurityAdministrationEvent.values()) {
+        for (SecurityAdministrationEventType event : SecurityAdministrationEventType.values()) {
             assertThat(event.toString(), is(event.toCodeReference().toString()));
         }
     }
@@ -51,8 +50,8 @@ public class SecurityAdministrationEventTest {
     @Test
     public void valueOfTest() {
         // Test equality and valueOf.
-        for (SecurityAdministrationEvent event : SecurityAdministrationEvent.values()) {
-            assertThat(SecurityAdministrationEvent.valueOf(event.name()), is(event));
+        for (SecurityAdministrationEventType event : SecurityAdministrationEventType.values()) {
+            assertThat(SecurityAdministrationEventType.valueOf(event.name()), is(event));
         }
     }
 }

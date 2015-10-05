@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lable.rfc3881.auditlogger.definition.rfc3881.events;
+package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 
 /**
- * A set of audit event actions related to security administration.
+ * A set of audit event types related to security administration.
  * <p/>
  * Defined by IETF/RFC 3881 §4.1. Security Administration.
  */
-public enum SecurityAdministrationEvent implements Referenceable {
+public enum SecurityAdministrationEventType implements Referenceable {
     /**
      * All operations performed on security attributes of data.
      * <p>
@@ -74,7 +74,7 @@ public enum SecurityAdministrationEvent implements Referenceable {
 
     private final String displayName;
 
-    SecurityAdministrationEvent(String displayName) {
+    SecurityAdministrationEventType(String displayName) {
         this.displayName = displayName;
     }
 

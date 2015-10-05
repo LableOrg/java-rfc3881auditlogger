@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lable.rfc3881.auditlogger.definition.rfc3881.events;
+package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
-import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 
 /**
- * A set of audit event actions related to accessing data.
+ * A set of audit event types related to accessing data.
  * <p/>
  * Defined by IETF/RFC 3881 §4.3. User Access.
  */
-public enum UserAccessEvent implements Referenceable {
+public enum UserAccessEventType implements Referenceable {
     /**
      * All authentication attempts, successful and unsuccessful. Includes automatically reissued tickets and tokens.
      * <p>
@@ -88,7 +87,7 @@ public enum UserAccessEvent implements Referenceable {
 
     private final String displayName;
 
-    UserAccessEvent(String displayName) {
+    UserAccessEventType(String displayName) {
         this.displayName = displayName;
     }
 
