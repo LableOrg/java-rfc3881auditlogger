@@ -21,11 +21,11 @@
   <parent>
     <groupId>org.lable.rfc3881.auditlogger</groupId>
     <artifactId>auditlogger</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.3</version>
   </parent>
 
   <artifactId>api</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.3</version>
   <packaging>jar</packaging>
 
   <name>IETF/RFC 3881 Audit Logger :: API</name>
