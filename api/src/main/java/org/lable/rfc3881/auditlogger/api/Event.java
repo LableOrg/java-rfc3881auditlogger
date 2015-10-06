@@ -100,6 +100,21 @@ public class Event implements Serializable {
     }
 
     /**
+     * Define an audit event with a {@link Categorizable} event-id. This type of event-id knows which event types it is
+     * classified under.
+     * <p>
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
+     * lot of event types the event-id will be something defined within your projects.
+     *
+     * @param id           Identifier with event type association.
+     * @param eventAction  Audit action.
+     * @param eventOutcome Outcome of the event.
+     */
+    public Event(Categorizable id, EventAction eventAction, EventOutcome eventOutcome) {
+        this(id, eventAction, Instant.now(), eventOutcome);
+    }
+
+    /**
      * Define an audit event.
      * <p>
      * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
@@ -133,10 +148,6 @@ public class Event implements Serializable {
      * <p>
      * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
      * lot of event types the event-id will be something defined within your projects.
-     * <p>
-     * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
-     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
-     * types to an event to help categorize it.
      *
      * @param id           Identifier with event type association.
      * @param eventAction  Audit action.

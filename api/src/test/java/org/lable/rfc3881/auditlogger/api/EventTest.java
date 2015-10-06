@@ -18,9 +18,14 @@ package org.lable.rfc3881.auditlogger.api;
 import org.joda.time.Instant;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
+import org.lable.codesystem.codereference.Categorizable;
 import org.lable.codesystem.codereference.CodeReference;
+import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -60,5 +65,25 @@ public class EventTest {
                 "Type:        [A: 1 (xx), B: 2 (yy)]";
 
         assertThat(event.toString(), is(expected));
+    }
+
+    @Test
+    public void categorizableConstructorTest() {
+        Event event = new Event(new CategorizableTest(), EventAction.EXECUTE, EventOutcome.SUCCESS);
+
+        assertThat(event.getTypes().size(), is(1));
+        assertThat(event.getTypes().get(0), is((Referenceable) new CodeReference("cat", "ZZZ")));
+    }
+
+    public static class CategorizableTest implements Categorizable {
+        @Override
+        public List<Referenceable> categorizedUnder() {
+            return Collections.singletonList((Referenceable) new CodeReference("cat", "ZZZ"));
+        }
+
+        @Override
+        public CodeReference toCodeReference() {
+            return new CodeReference("test", "XXX");
+        }
     }
 }
