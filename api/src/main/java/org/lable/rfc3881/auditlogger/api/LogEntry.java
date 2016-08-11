@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
