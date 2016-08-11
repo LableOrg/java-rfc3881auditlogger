@@ -17,9 +17,10 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
@@ -47,16 +48,16 @@ public class HBaseAdapter implements AuditLogAdapter {
     static final byte[] NULL_BYTE = new byte[]{0x00};
     static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
 
-    final HConnection hConnection;
-    final String table;
+    final Connection connection;
+    final TableName table;
     final byte[] columnFamily;
 
     @Inject
-    public HBaseAdapter(HConnection hConnection,
-                        @Named("audit-table") String table,
+    public HBaseAdapter(Connection connection,
+                        @Named("audit-table") String tableName,
                         @Named("audit-column-family") String columnFamily) {
-        this.hConnection = hConnection;
-        this.table = table;
+        this.connection = connection;
+        this.table = TableName.valueOf(tableName);
         this.columnFamily = toBytes(columnFamily);
     }
 
@@ -68,7 +69,7 @@ public class HBaseAdapter implements AuditLogAdapter {
         if (logEntry == null) return;
 
         // Very simple and naive approach for this first iteration.
-        try (HTableInterface auditTable = hConnection.getTable(table)) {
+        try (Table auditTable = connection.getTable(table)) {
             Put put = new Put(rowKeyFor(logEntry));
             addIfNotNull(put, "event", logEntry.getEvent());
             addIfNotNull(put, "requestor", logEntry.getRequestor());
@@ -100,7 +101,7 @@ public class HBaseAdapter implements AuditLogAdapter {
             // Add the identifiers to the column qualifier.
             qualifier = Bytes.add(qualifier, NULL_BYTE, columnQualifierSuffixFor((Identifiable) value));
         }
-        put.add(columnFamily, qualifier, objectMapper.writeValueAsBytes(value));
+        put.addColumn(columnFamily, qualifier, objectMapper.writeValueAsBytes(value));
     }
 
     static byte[] columnQualifierSuffixFor(Identifiable identifiable) {

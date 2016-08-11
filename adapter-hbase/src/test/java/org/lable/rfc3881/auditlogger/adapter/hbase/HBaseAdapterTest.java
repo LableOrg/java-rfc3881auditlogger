@@ -17,8 +17,8 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.joda.time.Instant;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class HBaseAdapterTest {
     public void recordTest() throws IOException {
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
-        try (HConnection hConnection = HConnectionManager.createConnection(conf)) {
+        try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
 
             AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event", "a");
 
