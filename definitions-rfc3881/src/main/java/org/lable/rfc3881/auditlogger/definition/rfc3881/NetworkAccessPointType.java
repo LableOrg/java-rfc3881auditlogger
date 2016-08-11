@@ -20,7 +20,7 @@ import org.lable.codesystem.codereference.Referenceable;
 
 /**
  * Network access point type.
- * <p/>
+ * <p>
  * Defined in RFC 3881 §5.3.1. Network Access Point Type Code.
  */
 public enum NetworkAccessPointType implements Referenceable {

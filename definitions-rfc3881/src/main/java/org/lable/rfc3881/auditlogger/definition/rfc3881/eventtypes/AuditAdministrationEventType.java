@@ -21,7 +21,7 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 
 /**
  * A set of audit event types related to access and administration of the audit log itself.
- * <p/>
+ * <p>
  * Defined by IETF/RFC 3881 §4.2. Audit Administration and Data Access.
  */
 public enum AuditAdministrationEventType implements Referenceable {

@@ -75,7 +75,7 @@ public class ParticipantObject implements Identifiable, Serializable {
     /**
      * Identifier for the data life-cycle stage for the participant object. This can be used to provide an audit trail
      * for data, over time, as it passes through the system
-     * <p/>
+     * <p>
      * IETF/RFC 3881 §5.5.3. Participant Object Data Life Cycle.
      */
     final DataLifeCycle dataLifeCycle;

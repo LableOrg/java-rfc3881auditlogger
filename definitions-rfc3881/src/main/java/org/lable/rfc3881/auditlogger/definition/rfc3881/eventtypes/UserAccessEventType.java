@@ -20,7 +20,7 @@ import org.lable.codesystem.codereference.Referenceable;
 
 /**
  * A set of audit event types related to accessing data.
- * <p/>
+ * <p>
  * Defined by IETF/RFC 3881 §4.3. User Access.
  */
 public enum UserAccessEventType implements Referenceable {

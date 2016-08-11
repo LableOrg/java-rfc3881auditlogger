@@ -31,7 +31,7 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * these may be used to identify relevant participants in an event. These include, for example, the application server
  * handling a request from a webapp, and an authentication server or some remote service performing tasks related to
  * the audit event.
- * <p/>
+ * <p>
  * Defined in RFC 3881 §5.4. Audit Source Identification.
  */
 public class AuditSource implements Identifiable, Serializable {

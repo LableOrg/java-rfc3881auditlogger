@@ -20,7 +20,7 @@ import org.lable.codesystem.codereference.Referenceable;
 
 /**
  * A set of audit event types related to security administration.
- * <p/>
+ * <p>
  * Defined by IETF/RFC 3881 §4.1. Security Administration.
  */
 public enum SecurityAdministrationEventType implements Referenceable {

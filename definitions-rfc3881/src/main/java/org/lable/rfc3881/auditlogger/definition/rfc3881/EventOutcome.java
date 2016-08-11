@@ -20,7 +20,7 @@ import org.lable.codesystem.codereference.Referenceable;
 
 /**
  * Event outcome.
- * <p/>
+ * <p>
  * Defined in RFC 3881 §5.1.4. Event Outcome Indicator.
  */
 public enum EventOutcome implements Referenceable {

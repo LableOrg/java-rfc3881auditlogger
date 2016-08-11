@@ -20,7 +20,7 @@ import org.lable.codesystem.codereference.Referenceable;
 
 /**
  * Event action.
- * <p/>
+ * <p>
  * Defined in RFC 3881 §5.1.2. Event Action Code.
  */
 public enum EventAction implements Referenceable {
@@ -42,7 +42,7 @@ public enum EventAction implements Referenceable {
     DELETE('D', "Delete"),
     /**
      * Execute.
-     * <p/>
+     * <p>
      * This category includes actions such a log-on and log-off action.
      */
     EXECUTE('E', "Execute");
