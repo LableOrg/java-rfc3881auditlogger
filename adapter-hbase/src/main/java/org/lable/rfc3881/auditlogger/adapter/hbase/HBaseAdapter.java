@@ -135,7 +135,7 @@ public class HBaseAdapter implements AuditLogAdapter {
         Event event = logEntry.getEvent();
         return Bytes.add(
                 // Flip the bytes in the data to order descending; latest event first.
-                ByteMangler.flip(flipTheFirstBit(toBytes(event.getHappenedAt().getMillis()))),
+                ByteMangler.flip(flipTheFirstBit(toBytes(event.getHappenedAt()))),
                 referenceableToBytes(event.getId())
         );
     }

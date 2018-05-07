@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.rfc3881.auditlogger.api.*;
@@ -32,7 +31,6 @@ public class RFC3881ModuleTest {
     public void moduleTest() throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new RFC3881Module());
-        objectMapper.registerModule(new JodaModule());
         objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 

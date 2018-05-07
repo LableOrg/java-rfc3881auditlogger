@@ -15,8 +15,6 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
-import org.joda.time.Instant;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 import org.lable.codesystem.codereference.Categorizable;
 import org.lable.codesystem.codereference.CodeReference;
@@ -24,6 +22,7 @@ import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,12 +35,12 @@ public class EventTest {
         Event event = new Event(
                 new CodeReference("CS", "01", "test"),
                 EventAction.CREATE,
-                Instant.parse("2015-09-01T14:00:00.000", ISODateTimeFormat.dateHourMinuteSecondMillis().withZoneUTC()),
+                Instant.parse("2015-09-01T14:00:00.001Z").toEpochMilli(),
                 EventOutcome.SUCCESS);
 
         String expected = "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.000 (UTC)\n" +
+                "At:          2015-09-01T14:00:00.001Z\n" +
                 "Outcome:     Success\n" +
                 "Type:        []";
 
@@ -53,14 +52,14 @@ public class EventTest {
         Event event = new Event(
                 new CodeReference("CS", "01", "test"),
                 EventAction.CREATE,
-                Instant.parse("2015-09-01T14:00:00.000", ISODateTimeFormat.dateHourMinuteSecondMillis().withZoneUTC()),
+                Instant.parse("2015-09-01T14:00:00.001Z").toEpochMilli(),
                 EventOutcome.SUCCESS,
                 new CodeReference("A", "1", "xx"),
                 new CodeReference("B", "2", "yy"));
 
         String expected = "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.000 (UTC)\n" +
+                "At:          2015-09-01T14:00:00.001Z\n" +
                 "Outcome:     Success\n" +
                 "Type:        [A: 1 (xx), B: 2 (yy)]";
 

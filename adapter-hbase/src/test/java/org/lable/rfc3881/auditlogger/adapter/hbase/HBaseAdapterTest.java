@@ -19,7 +19,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.joda.time.Instant;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
@@ -42,11 +41,11 @@ public class HBaseAdapterTest {
         conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
         try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
 
-            AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "audit:audit_trail_by_event", "a");
+            AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "jeroen:audit_test", "a");
 
-            Instant instant = Instant.now();
+            long instant = System.currentTimeMillis();
             for (int i = 0; i < 1; i++) {
-                instant = instant.plus(1);
+                instant += 1;
                 LogEntry logEntry = new LogEntry(
                         new Event(new CodeReference("events", "logon", "log-on"),
                                 EventAction.EXECUTE, instant, EventOutcome.SUCCESS),

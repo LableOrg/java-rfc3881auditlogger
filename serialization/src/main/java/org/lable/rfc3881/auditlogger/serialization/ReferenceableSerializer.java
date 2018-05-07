@@ -47,7 +47,7 @@ public class ReferenceableSerializer extends JsonSerializer<Referenceable> {
 
     void writeField(JsonGenerator generator, SerializerProvider provider, String name, String value)
             throws IOException {
-        switch (provider.getConfig().getSerializationInclusion()) {
+        switch (provider.getConfig().getDefaultPropertyInclusion().getValueInclusion()) {
             case NON_NULL:
             case NON_ABSENT:
                 if (value == null) return;

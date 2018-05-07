@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.lable.oss</groupId>
     <artifactId>parent</artifactId>
-    <version>1.7</version>
+    <version>1.10</version>
   </parent>
 
   <groupId>org.lable.rfc3881.auditlogger</groupId>
@@ -44,12 +44,11 @@
   </modules>
 
   <properties>
-    <codesystemutil.version>1.3</codesystemutil.version>
-    <jodatime.version>2.8.2</jodatime.version>
+    <codesystemutil.version>1.4</codesystemutil.version>
     <slf4j.version>1.7.12</slf4j.version>
-    <hbase.version>1.0.3</hbase.version>
-    <jackson.version>2.6.2</jackson.version>
-    <bitsandbytes.version>2.3</bitsandbytes.version>
+    <hbase.version>1.2.0</hbase.version>
+    <jackson.version>2.7.1</jackson.version>
+    <bitsandbytes.version>3.1</bitsandbytes.version>
 
     <!-- Testing dependencies. -->
     <log4j.version>2.3</log4j.version>

@@ -15,8 +15,6 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
-import org.joda.time.Instant;
-import org.joda.time.format.ISODateTimeFormat;
 import org.lable.codesystem.codereference.Categorizable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
@@ -26,6 +24,8 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.SecurityAdmin
 import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEventType;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,11 +48,11 @@ public class Event implements Serializable {
     final Referenceable id;
 
     /**
-     * Timestamp for when the audit event took place.
+     * Timestamp for when the audit event took place in milliseconds since the Unix epoch.
      * <p>
      * IETF/RFC 3881 §5.1.3. Event Date/Time.
      */
-    final Instant happenedAt;
+    final long happenedAt;
 
     /**
      * Indicates whether the event succeeded or failed.
@@ -96,7 +96,7 @@ public class Event implements Serializable {
      * @see UserAccessEventType
      */
     public Event(Referenceable id, EventAction eventAction, EventOutcome eventOutcome, Referenceable... types) {
-        this(id, eventAction, Instant.now(), eventOutcome, types);
+        this(id, eventAction, System.currentTimeMillis(), eventOutcome, types);
     }
 
     /**
@@ -111,7 +111,7 @@ public class Event implements Serializable {
      * @param eventOutcome Outcome of the event.
      */
     public Event(Categorizable id, EventAction eventAction, EventOutcome eventOutcome) {
-        this(id, eventAction, Instant.now(), eventOutcome);
+        this(id, eventAction, System.currentTimeMillis(), eventOutcome);
     }
 
     /**
@@ -133,7 +133,10 @@ public class Event implements Serializable {
      * @see SecurityAdministrationEventType
      * @see UserAccessEventType
      */
-    public Event(Referenceable id, EventAction eventAction, Instant happenedAt, EventOutcome eventOutcome,
+    public Event(Referenceable id,
+                 EventAction eventAction,
+                 long happenedAt,
+                 EventOutcome eventOutcome,
                  Referenceable... types) {
         this.id = id;
         this.eventAction = eventAction;
@@ -154,7 +157,7 @@ public class Event implements Serializable {
      * @param happenedAt   When this event took place.
      * @param eventOutcome Outcome of the event.
      */
-    public Event(Categorizable id, EventAction eventAction, Instant happenedAt, EventOutcome eventOutcome) {
+    public Event(Categorizable id, EventAction eventAction, long happenedAt, EventOutcome eventOutcome) {
         this.id = id;
         this.eventAction = eventAction;
         this.happenedAt = happenedAt;
@@ -179,7 +182,7 @@ public class Event implements Serializable {
     /**
      * @return When the event happened.
      */
-    public Instant getHappenedAt() {
+    public long getHappenedAt() {
         return happenedAt;
     }
 
@@ -198,8 +201,7 @@ public class Event implements Serializable {
     public String toString() {
         return "ID:          " + getId() +
                 "\nAction:      " + getAction().getDisplayName() +
-                "\nAt:          " + getHappenedAt().toString(
-                ISODateTimeFormat.dateHourMinuteSecondMillis().withZoneUTC()) + " (UTC)" +
+                "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(happenedAt)) +
                 "\nOutcome:     " + getOutcome().getDisplayName() +
                 "\nType:        " + getTypes();
     }
