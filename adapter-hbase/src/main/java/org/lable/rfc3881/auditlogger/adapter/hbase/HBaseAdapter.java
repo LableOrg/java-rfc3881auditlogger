@@ -18,7 +18,6 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -37,6 +36,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
 import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
@@ -48,17 +49,28 @@ public class HBaseAdapter implements AuditLogAdapter {
     static final byte[] NULL_BYTE = new byte[]{0x00};
     static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
 
-    final Connection connection;
-    final TableName table;
-    final byte[] columnFamily;
+    private final Function<TableName, Table> hbaseConnection;
+    private final Supplier<TableName> tableNameSetting;
+    private final Supplier<String> columnFamilySetting;
+    private final Supplier<byte[]> uniqueIDGenerator;
 
+    /**
+     * Create a new {@link HBaseAdapter}.
+     *
+     * @param hbaseConnection     A function that returns a HBase {@link Table}.
+     * @param tableNameSetting    A supplier that returns the table logs should be persisted to.
+     * @param columnFamilySetting A supplier that returns the column family that should be used for the logs.
+     * @param uniqueIDGenerator   A supplier that returns a unique identifier on each call.
+     */
     @Inject
-    public HBaseAdapter(Connection connection,
-                        @Named("audit-table") String tableName,
-                        @Named("audit-column-family") String columnFamily) {
-        this.connection = connection;
-        this.table = TableName.valueOf(tableName);
-        this.columnFamily = toBytes(columnFamily);
+    public HBaseAdapter(@Named("hbase-connection") Function<TableName, Table> hbaseConnection,
+                        @Named("audit-table") Supplier<TableName> tableNameSetting,
+                        @Named("audit-column-family") Supplier<String> columnFamilySetting,
+                        @Named("uid-generator") Supplier<byte[]> uniqueIDGenerator) {
+        this.hbaseConnection = hbaseConnection;
+        this.tableNameSetting = tableNameSetting;
+        this.columnFamilySetting = columnFamilySetting;
+        this.uniqueIDGenerator = uniqueIDGenerator;
     }
 
     /**
@@ -68,9 +80,8 @@ public class HBaseAdapter implements AuditLogAdapter {
     public void record(LogEntry logEntry) throws IOException {
         if (logEntry == null) return;
 
-        // Very simple and naive approach for this first iteration.
-        try (Table auditTable = connection.getTable(table)) {
-            Put put = new Put(rowKeyFor(logEntry));
+        try (Table auditTable = hbaseConnection.apply(tableNameSetting.get())) {
+            Put put = new Put(rowKeyFor(logEntry, uniqueIDGenerator.get()));
             addIfNotNull(put, "event", logEntry.getEvent());
             addIfNotNull(put, "requestor", logEntry.getRequestor());
             addIfNotNull(put, "delegator", logEntry.getDelegator());
@@ -101,7 +112,7 @@ public class HBaseAdapter implements AuditLogAdapter {
             // Add the identifiers to the column qualifier.
             qualifier = Bytes.add(qualifier, NULL_BYTE, columnQualifierSuffixFor((Identifiable) value));
         }
-        put.addColumn(columnFamily, qualifier, objectMapper.writeValueAsBytes(value));
+        put.addColumn(toBytes(columnFamilySetting.get()), qualifier, objectMapper.writeValueAsBytes(value));
     }
 
     static byte[] columnQualifierSuffixFor(Identifiable identifiable) {
@@ -131,11 +142,12 @@ public class HBaseAdapter implements AuditLogAdapter {
         return buffer.array();
     }
 
-    static byte[] rowKeyFor(LogEntry logEntry) {
+    static byte[] rowKeyFor(LogEntry logEntry, byte[] uid) {
         Event event = logEntry.getEvent();
         return Bytes.add(
                 // Flip the bytes in the data to order descending; latest event first.
                 ByteMangler.flip(flipTheFirstBit(toBytes(event.getHappenedAt()))),
+                uid,
                 referenceableToBytes(event.getId())
         );
     }

@@ -17,17 +17,24 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+import org.lable.oss.bitsandbytes.ByteConversion;
+import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -37,14 +44,27 @@ public class HBaseAdapterTest {
     @Test
     @Ignore
     public void recordTest() throws IOException {
+        AtomicLong uid = new AtomicLong();
+
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
         try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
 
-            AuditLogAdapter auditLogAdapter = new HBaseAdapter(hConnection, "jeroen:audit_test", "a");
+            AuditLogAdapter auditLogAdapter = new HBaseAdapter(
+                    tableName -> {
+                        try {
+                            return hConnection.getTable(tableName);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    () -> TableName.valueOf("jeroen", "audit_test6"),
+                    () -> "a",
+                    () -> Bytes.toBytes(uid.getAndIncrement())
+            );
 
-            long instant = System.currentTimeMillis();
-            for (int i = 0; i < 1; i++) {
+            long instant = System.currentTimeMillis() - 1_000_000;
+            for (int i = 0; i < 100_000; i++) {
                 instant += 1;
                 LogEntry logEntry = new LogEntry(
                         new Event(new CodeReference("events", "logon", "log-on"),
@@ -88,6 +108,61 @@ public class HBaseAdapterTest {
                 );
 
                 auditLogAdapter.record(logEntry);
+            }
+        }
+    }
+
+    @Test
+    @Ignore
+    public void rawTest() throws IOException {
+        byte[] bEvents = ByteConversion.fromString("events");
+        byte[] bLogon = ByteConversion.fromString("logon");
+        byte[] cf = ByteConversion.fromString("a");
+        byte[] bNet = ByteConversion.fromString("net");
+        byte[] bNetVal = ByteConversion.fromString("127.0.0.1");
+        byte[] bEvent = ByteConversion.fromString("e");
+        byte[] bEventVal = ByteConversion.fromString("le:logon:E:0");
+        byte[] bVersion = ByteConversion.fromString("v");
+        byte[] bVersionVal = ByteConversion.fromString("le:1");
+        byte[] bPrin1 = ByteConversion.fromString("p");
+        byte[] bPrin1Val = ByteConversion.fromString("8-mkmdmgmmmkmpxxmc");
+        byte[] bPrin2 = ByteConversion.fromString("d");
+        byte[] bPrin2Val = ByteConversion.fromString("8-zzzzzzmmmkmpxxmc");
+        byte[] as1 = ByteConversion.fromString("as:0");
+        byte[] as1Val = ByteConversion.fromString("ws:tomcat1");
+        byte[] as2 = ByteConversion.fromString("as:1");
+        byte[] as2Val = ByteConversion.fromString("ss:authserver");
+        byte[] po1 = ByteConversion.fromString("po:0");
+        byte[] po1Val = ByteConversion.fromString("8-xxxxxzmmmkmpxxmc:P:le1:user:A:TOPSECRET:details1");
+        byte[] po2 = ByteConversion.fromString("po:1");
+        byte[] po2Val = ByteConversion.fromString("8-ccccczmmmkmpxxmc:S:le1:data:A");
+
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
+        try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
+            Table table = hConnection.getTable(TableName.valueOf("jeroen", "audit_test4"));
+            long instant = System.currentTimeMillis() - 1_000;
+            for (int i = 0; i < 100_000; i++) {
+                instant += 1;
+                byte[] row = ByteMangler.add(
+                        ByteMangler.reverse(ByteConversion.fromLong(instant)),
+                        bEvents,
+                        new byte[0],
+                        bLogon
+                );
+                Put put = new Put(row);
+                put.addColumn(cf, bNet, bNetVal);
+                put.addColumn(cf, bEvent, bEventVal);
+                put.addColumn(cf, bEvent, bEventVal);
+                put.addColumn(cf, bVersion, bVersionVal);
+                put.addColumn(cf, bPrin1, bPrin1Val);
+                put.addColumn(cf, bPrin2, bPrin2Val);
+                put.addColumn(cf, as1, as1Val);
+                put.addColumn(cf, as2, as2Val);
+                put.addColumn(cf, po1, po1Val);
+                put.addColumn(cf, po2, po2Val);
+
+                table.put(put);
             }
         }
     }
