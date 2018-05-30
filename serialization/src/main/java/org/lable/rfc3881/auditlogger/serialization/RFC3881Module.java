@@ -26,10 +26,15 @@ import org.lable.codesystem.codereference.Referenceable;
 public class RFC3881Module extends SimpleModule {
     private static final long serialVersionUID = 1844370161677549243L;
 
-    public RFC3881Module() {
+    public RFC3881Module(boolean compact) {
         super("IETF/RFC 3881 JSON module", new Version(1, 0, 0, null, null, null));
 
-        addSerializer(Referenceable.class, new ReferenceableSerializer());
+        if (compact) {
+            addSerializer(Referenceable.class, new CompactReferenceableSerializer());
+        } else {
+            addSerializer(Referenceable.class, new ReferenceableSerializer());
+        }
+
         addDeserializer(CodeReference.class, new CodeReferenceDeserializer());
     }
 }

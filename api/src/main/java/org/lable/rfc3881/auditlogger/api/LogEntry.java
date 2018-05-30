@@ -171,7 +171,7 @@ public class LogEntry {
                 (getParticipatingPrincipals() == null || getParticipatingPrincipals().isEmpty()
                         ? "" : "participants:\n" + join(getParticipatingPrincipals()) + "\n") +
                 "[[   network access point   ]]:\n" +
-                getNetworkAccessPoint() + "\n" +
+                (getNetworkAccessPoint() == null ? "not set\n" : getNetworkAccessPoint() + "\n") +
                 "[[   audit sources   ]]:\n" +
                 join(getAuditSources()) + "\n" +
                 "[[   participant objects   ]]:\n" +
@@ -182,15 +182,19 @@ public class LogEntry {
     }
 
     static String join(List<?> objects) {
-        String out = "";
+        if (objects == null || objects.isEmpty()) {
+            return "none";
+        }
+
+        StringBuilder out = new StringBuilder();
         boolean first = true;
         for (Object object : objects) {
-            out += object.toString();
+            out.append(object.toString());
             if (!first) {
-                out += "\n-\n";
+                out.append("\n-\n");
             }
             first = false;
         }
-        return out;
+        return out.toString();
     }
 }

@@ -30,7 +30,7 @@ public class RFC3881ModuleTest {
     @Test
     public void moduleTest() throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new RFC3881Module());
+        objectMapper.registerModule(new RFC3881Module(true));
         objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 

@@ -34,16 +34,16 @@ public class CodeReferenceDeserializer extends JsonDeserializer<CodeReference> {
         JsonNode node = oc.readTree(parser);
 
         // Required fields.
-        if (!node.has("cs") || !node.has("code") || !node.has("dn")) {
+        if (!node.has("cs") || !node.has("code")) {
             return null;
         }
         String codeSystem = node.get("cs").asText(null);
         String code = node.get("code").asText(null);
-        String displayName = node.get("dn").asText(null);
 
         // Optional fields, can be null.
         String codeSystemName = node.has("csn") ? node.get("csn").asText(null) : null;
         String originalText = node.has("ot") ? node.get("ot").asText(null) : null;
+        String displayName = node.has("dn") ? node.get("dn").asText(null) : null;
 
         return new CodeReference(codeSystem, codeSystemName, code, displayName, originalText);
     }

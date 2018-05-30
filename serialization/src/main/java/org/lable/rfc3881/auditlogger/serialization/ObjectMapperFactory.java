@@ -29,7 +29,7 @@ public class ObjectMapperFactory {
      */
     public static ObjectMapper getObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new RFC3881Module());
+        objectMapper.registerModule(new RFC3881Module(true));
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
         return objectMapper;
