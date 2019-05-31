@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.junit.Test;
+import org.lable.codesystem.codereference.CodeReference;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.github.npathai.hamcrestopt.OptionalMatchers.hasValue;
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import static org.lable.rfc3881.auditlogger.definition.rfc3881.DataLifeCycle.*;
 
 public class DataLifeCycleTest {
     @Test
@@ -37,6 +41,15 @@ public class DataLifeCycleTest {
 
         assertThat(codes.size(), is(DataLifeCycle.values().length));
         assertThat(displayNames.size(), is(DataLifeCycle.values().length));
+    }
+
+    @Test
+    public void fromReferenceableTest() {
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "1")), hasValue(ORIGINATION_OR_CREATION));
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "14")), hasValue(LOGICAL_DELETION));
+
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "?")), isEmpty());
+        assertThat(fromReferenceable(new CodeReference("?", "1")), isEmpty());
     }
 
     @Test

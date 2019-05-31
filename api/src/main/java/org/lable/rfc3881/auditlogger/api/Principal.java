@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 
@@ -23,8 +25,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.collectionMayNotBeNullOrEmpty;
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
 
 /**
@@ -50,7 +53,7 @@ public class Principal implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.2.2.  Alternative User ID.
      */
-    final String alternateUserId;
+    final List<String> alternateUserId;
 
     /**
      * The human-meaningful name for the user.
@@ -65,7 +68,37 @@ public class Principal implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.2.5. Role ID Code.
      */
-    final List<Referenceable> relevantRoles;
+    final List<CodeReference> relevantRoles;
+
+    /**
+     * Define a principal.
+     *
+     * @param userId          Unique user ID.
+     * @param alternateUserId Synonymous user IDs.
+     * @param name            Human readable name.
+     * @param relevantRoles   List of roles relevant for the action performed.
+     */
+    public Principal(String userId,
+                     List<String> alternateUserId,
+                     String name,
+                     List<? extends Referenceable> relevantRoles) {
+        parameterMayNotBeNull("userId", userId);
+
+        this.userId = userId;
+        this.alternateUserId = alternateUserId == null ? Collections.emptyList() : alternateUserId;
+        this.name = name;
+        this.relevantRoles = relevantRoles == null ? Collections.emptyList() : relevantRoles.stream()
+                .map(Referenceable::toCodeReference)
+                .collect(Collectors.toList());
+    }
+
+    @JsonCreator
+    private static Principal json(@JsonProperty("userId") String userId,
+                                  @JsonProperty("alternateUserId") List<String> alternateUserId,
+                                  @JsonProperty("name") String name,
+                                  @JsonProperty("relevantRoles") List<CodeReference> relevantRoles) {
+        return new Principal(userId, alternateUserId, name, relevantRoles);
+    }
 
     /**
      * Define a principal.
@@ -74,7 +107,19 @@ public class Principal implements Identifiable, Serializable {
      * @param relevantRoles List of roles relevant for the action performed.
      */
     public Principal(String userId, Referenceable... relevantRoles) {
-        this(userId, null, null, relevantRoles);
+        this(userId, Collections.emptyList(), null, relevantRoles);
+    }
+
+    /**
+     * Define a principal.
+     *
+     * @param userId          Unique user ID.
+     * @param alternateUserId Synonymous user IDs.
+     * @param name            Human readable name.
+     * @param relevantRoles   List of roles relevant for the action performed.
+     */
+    public Principal(String userId, List<String> alternateUserId, String name, Referenceable... relevantRoles) {
+        this(userId, alternateUserId, name, Arrays.asList(relevantRoles));
     }
 
     /**
@@ -86,19 +131,14 @@ public class Principal implements Identifiable, Serializable {
      * @param relevantRoles   List of roles relevant for the action performed.
      */
     public Principal(String userId, String alternateUserId, String name, Referenceable... relevantRoles) {
-        parameterMayNotBeNull("userId", userId);
-
-        this.userId = userId;
-        this.alternateUserId = alternateUserId;
-        this.name = name;
-        this.relevantRoles = Arrays.asList(relevantRoles);
+        this(userId, Collections.singletonList(alternateUserId), name, relevantRoles);
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public List<Referenceable> getRelevantRoles() {
+    public List<CodeReference> getRelevantRoles() {
         return relevantRoles;
     }
 
@@ -106,7 +146,7 @@ public class Principal implements Identifiable, Serializable {
         return name;
     }
 
-    public String getAlternateUserId() {
+    public List<String> getAlternateUserId() {
         return alternateUserId;
     }
 
@@ -119,10 +159,29 @@ public class Principal implements Identifiable, Serializable {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Principal that = (Principal) other;
+        return Objects.equals(userId, that.userId) &&
+                Objects.equals(alternateUserId, that.alternateUserId) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(relevantRoles, that.relevantRoles);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId, alternateUserId, name, relevantRoles);
+    }
+
+    @Override
     public String toString() {
         return "ID:          " + getUserId() +
                 (getName() == null || getName().isEmpty() ? "" : "\nName:        " + getName()) +
-                (getAlternateUserId() == null ? "" : "\nAlt ID:      " + getAlternateUserId()) +
+                (getAlternateUserId().isEmpty()
+                        ? ""
+                        : "\nAlt ID:      " + String.join("; ", getAlternateUserId())) +
                 "\nRoles:       " + (getRelevantRoles() == null ? "[]" : getRelevantRoles());
     }
 }

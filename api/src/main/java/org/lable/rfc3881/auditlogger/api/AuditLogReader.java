@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Codes and their definitions as defined in IETF/RFC 3881.
- */
-package org.lable.rfc3881.auditlogger.definition.rfc3881;
+package org.lable.rfc3881.auditlogger.api;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+
+public interface AuditLogReader {
+    List<LogEntry> read(Instant from, Instant to) throws IOException;
+}

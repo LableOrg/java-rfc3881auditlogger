@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 /**
  * A set of audit event types related to security administration.
@@ -72,6 +74,8 @@ public enum SecurityAdministrationEventType implements Referenceable {
      */
     USER_DEFINITION("User Definition");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.4.1";
+
     private final String displayName;
 
     SecurityAdministrationEventType(String displayName) {
@@ -86,10 +90,24 @@ public enum SecurityAdministrationEventType implements Referenceable {
         return displayName;
     }
 
+    public static Optional<SecurityAdministrationEventType> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (SecurityAdministrationEventType value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.4.1",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §4.1., Security Administration",
                 getCode(),
                 getDisplayName(),

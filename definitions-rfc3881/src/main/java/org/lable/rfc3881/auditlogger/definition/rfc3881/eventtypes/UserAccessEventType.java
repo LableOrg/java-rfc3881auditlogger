@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+import org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectTypeRole;
+
+import java.util.Optional;
 
 /**
  * A set of audit event types related to accessing data.
@@ -85,6 +88,8 @@ public enum UserAccessEventType implements Referenceable {
      */
     STAFF_OR_PARTICIPANT_ASSIGNMENT("Staff/Participant Assignment");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.4.1";
+
     private final String displayName;
 
     UserAccessEventType(String displayName) {
@@ -99,10 +104,24 @@ public enum UserAccessEventType implements Referenceable {
         return displayName;
     }
 
+    public static Optional<UserAccessEventType> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (UserAccessEventType value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.4.1",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §4.1., Security Administration",
                 getCode(),
                 getDisplayName(),

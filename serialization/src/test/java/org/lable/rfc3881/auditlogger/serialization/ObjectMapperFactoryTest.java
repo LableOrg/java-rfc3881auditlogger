@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,14 @@ package org.lable.rfc3881.auditlogger.serialization;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.lable.codesystem.codereference.CodeReference;
+import org.lable.rfc3881.auditlogger.api.Principal;
 
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 import static org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory.getObjectMapper;
 
 public class ObjectMapperFactoryTest {
@@ -29,6 +36,38 @@ public class ObjectMapperFactoryTest {
         TestObject testObject = new TestObject("a", null);
 
         System.out.println(objectMapper.writeValueAsString(testObject));
+    }
+
+    @Test
+    public void singleValueAsListTest() throws IOException {
+        ObjectMapper objectMapper = getObjectMapper();
+
+        Principal principal = objectMapper.readValue(
+                "{\"userId\":\"USER\", \"alternateUserId\": \"A\"}",
+                Principal.class
+        );
+
+        assertThat(principal.getUserId(), is("USER"));
+        assertThat(principal.getAlternateUserId(), containsInAnyOrder("A"));
+    }
+
+    @Test
+    public void multiValueAsListTest() throws IOException {
+        ObjectMapper objectMapper = getObjectMapper();
+
+        Principal principal = objectMapper.readValue(
+                "{\"userId\":\"USER\", " +
+                "\"alternateUserId\": [\"A\", \"B\"]," +
+                "\"name\": \"NAME\"," +
+                "\"relevantRoles\": [{\"cs\":\"CS\",\"code\":\"CODE\"}]" +
+                "}",
+                Principal.class
+        );
+
+        assertThat(principal.getUserId(), is("USER"));
+        assertThat(principal.getName(), is("NAME"));
+        assertThat(principal.getRelevantRoles(), containsInAnyOrder(new CodeReference("CS", "CODE")));
+        assertThat(principal.getAlternateUserId(), containsInAnyOrder("A", "B"));
     }
 
     static class TestObject {

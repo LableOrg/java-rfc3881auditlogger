@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881;
 import org.lable.codesystem.codereference.Applicable;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 import static org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectType.ORGANIZATION;
 import static org.lable.rfc3881.auditlogger.definition.rfc3881.ParticipantObjectType.PERSON;
@@ -78,6 +80,8 @@ public enum ParticipantObjectIDType implements Applicable, Referenceable {
      */
     URI("12", "URI", SYSTEM_OBJECT);
 
+    final static String CODE_SYSTEM = "IETF/RFC3881.5.5.4";
+
     private final String code;
     private final String displayName;
     private final ParticipantObjectType[] applicableTypes;
@@ -94,6 +98,20 @@ public enum ParticipantObjectIDType implements Applicable, Referenceable {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public static Optional<ParticipantObjectIDType> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (ParticipantObjectIDType value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
     }
 
     @Override

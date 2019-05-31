@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+    Copyright (C) 2015 Lable (info@lable.nl)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,6 +38,14 @@
     <dependency>
       <groupId>org.lable.codesystem</groupId>
       <artifactId>codereference</artifactId>
+    </dependency>
+
+    <!-- Testing dependencies. -->
+    <dependency>
+      <groupId>com.github.npathai</groupId>
+      <artifactId>hamcrest-optional</artifactId>
+      <version>${hamcrest.optional}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

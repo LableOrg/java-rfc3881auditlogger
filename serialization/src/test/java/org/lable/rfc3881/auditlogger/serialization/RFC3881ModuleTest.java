@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,12 @@ import org.lable.codesystem.codereference.CodeReference;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class RFC3881ModuleTest {
     @Test
@@ -36,7 +41,7 @@ public class RFC3881ModuleTest {
 
         LogEntry logEntry = new LogEntry(
                 new Event(new CodeReference("events", "logon", "log-on"), EventAction.EXECUTE, EventOutcome.SUCCESS),
-                new Principal("bob", null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
+                new Principal("bob", (String) null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
                 null,
                 null,
                 NetworkAccessPoint.byIPAddress("127.0.0.1"),
@@ -50,15 +55,119 @@ public class RFC3881ModuleTest {
                                 DataLifeCycle.ACCESS_OR_USE,
                                 new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
                                 "Bob Jones",
-                                "TEST".getBytes(),
+                                "TEST",
                                 new ParticipantObject.Detail(
                                         new CodeReference("detail", "DT1", "Detail 1"),
-                                        new byte[0]
+                                        "DETAIL"
                                 ))
                 ),
                 new CodeReference("version", "1", "1")
         );
 
         System.out.println(objectMapper.writeValueAsString(logEntry));
+    }
+
+    @Test
+    public void eventTest() throws IOException {
+        Event event = new Event(
+                new CodeReference("id", "1"),
+                EventAction.READ,
+                12L,
+                EventOutcome.SUCCESS,
+                Arrays.asList(
+                        new CodeReference("t", "A"),
+                        new CodeReference("t", "B")
+                )
+        );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new RFC3881Module(true));
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        String json = objectMapper.writeValueAsString(event);
+
+        System.out.println(json);
+
+        Event eventOut = objectMapper.readValue(json, Event.class);
+
+        assertThat(event, is(eventOut));
+
+        System.out.println(event);
+        System.out.println(eventOut);
+    }
+
+    @Test
+    public void principalTest() throws IOException {
+        Principal principal = new Principal(
+                "id",
+                Arrays.asList("a", "b"),
+                "name",
+                new CodeReference("role", "R")
+        );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new RFC3881Module(true));
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        String json = objectMapper.writeValueAsString(principal);
+
+        Principal principalOut = objectMapper.readValue(json, Principal.class);
+
+        assertThat(principal, is(principalOut));
+    }
+
+    @Test
+    public void networkAccessPointTest() throws IOException {
+        NetworkAccessPoint accessPoint = NetworkAccessPoint.byIPAddress("10.0.0.1");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new RFC3881Module(true));
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        String json = objectMapper.writeValueAsString(accessPoint);
+
+        NetworkAccessPoint accessPointOut = objectMapper.readValue(json, NetworkAccessPoint.class);
+
+        assertThat(accessPoint, is(accessPointOut));
+    }
+
+    @Test
+    public void auditSourceTest() throws IOException {
+        AuditSource auditSource = new AuditSource("site-id", "id");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new RFC3881Module(true));
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        String json = objectMapper.writeValueAsString(auditSource);
+
+        AuditSource auditSourceOut = objectMapper.readValue(json, AuditSource.class);
+
+        assertThat(auditSource, is(auditSourceOut));
+    }
+
+    @Test
+    public void participantObjectTest() throws IOException {
+        ParticipantObject object = new ParticipantObject(
+                "id",
+                ParticipantObjectType.SYSTEM_OBJECT,
+                new CodeReference("cr", "id"),
+                ParticipantObjectTypeRole.JOB,
+                DataLifeCycle.ACCESS_OR_USE,
+                new CodeReference("sens", "very"),
+                "name",
+                "GET",
+                new ParticipantObject.Detail(new CodeReference("dt", "d"), "XXX")
+        );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new RFC3881Module(true));
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        String json = objectMapper.writeValueAsString(object);
+
+        ParticipantObject objectOut = objectMapper.readValue(json, ParticipantObject.class);
+
+        assertThat(objectOut, is(objectOut));
     }
 }

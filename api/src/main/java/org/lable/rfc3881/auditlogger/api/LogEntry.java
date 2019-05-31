@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package org.lable.rfc3881.auditlogger.api;
 
 import org.lable.codesystem.codereference.Referenceable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Log entry for an audit event.
@@ -96,10 +98,10 @@ public class LogEntry {
         this.event = event;
         this.requestor = requestor;
         this.delegator = delegator;
-        this.participatingPrincipals = participatingPrincipals;
+        this.participatingPrincipals = participatingPrincipals == null ? Collections.emptyList() : participatingPrincipals;
         this.networkAccessPoint = networkAccessPoint;
-        this.auditSources = auditSources;
-        this.participantObjects = participantObjects;
+        this.auditSources = auditSources == null ? Collections.emptyList() : auditSources;
+        this.participantObjects = participantObjects == null ? Collections.emptyList() : participantObjects;
         this.version = version;
     }
 
@@ -160,6 +162,30 @@ public class LogEntry {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        LogEntry that = (LogEntry) other;
+        return Objects.equals(this.event, that.event) &&
+                Objects.equals(this.requestor, that.requestor) &&
+                Objects.equals(this.delegator, that.delegator) &&
+                Objects.equals(this.participatingPrincipals, that.participatingPrincipals) &&
+                Objects.equals(this.networkAccessPoint, that.networkAccessPoint) &&
+                Objects.equals(this.auditSources, that.auditSources) &&
+                Objects.equals(this.participantObjects, that.participantObjects) &&
+                Objects.equals(this.version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                event, requestor, delegator, participatingPrincipals, networkAccessPoint,
+                auditSources, participantObjects, version
+        );
+    }
+
+    @Override
     public String toString() {
         return "AUDIT EVENT\n" +
                 "--------------------------------------------\n" +
@@ -177,7 +203,7 @@ public class LogEntry {
                 "[[   participant objects   ]]:\n" +
                 join(getParticipantObjects()) + "\n" +
                 "[[   version   ]]:\n" +
-                (getVersion() == null ? "unknown" : getVersion() + "\n") +
+                (getVersion() == null ? "unknown" : getVersion()) + "\n" +
                 "--------------------------------------------";
     }
 

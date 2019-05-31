@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.Categorizable;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventAction;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome;
@@ -27,7 +30,10 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Audit event.
@@ -45,7 +51,7 @@ public class Event implements Serializable {
      * <p>
      * IETF/RFC 3881 §5.1.1. Event ID.
      */
-    final Referenceable id;
+    final CodeReference id;
 
     /**
      * Timestamp for when the audit event took place in milliseconds since the Unix epoch.
@@ -59,7 +65,7 @@ public class Event implements Serializable {
      * <p>
      * IETF/RFC 3881 §5.1.4. Event Outcome Indicator.
      */
-    final EventOutcome eventOutcome;
+    final CodeReference eventOutcome;
 
     /* Optional fields. */
 
@@ -68,14 +74,56 @@ public class Event implements Serializable {
      * <p>
      * IETF/RFC 3881 §5.1.2. Event Action Code.
      */
-    final EventAction eventAction;
+    final CodeReference eventAction;
 
     /**
      * Identifier for the category of event.
      * <p>
      * IETF/RFC 3881 §5.1.5. Event Type Code.
      */
-    final List<Referenceable> types;
+    final List<CodeReference> types;
+
+    /**
+     * Define an audit event.
+     * <p>
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
+     * lot of event types the event-id will be something defined within your projects.
+     * <p>
+     * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
+     * types to an event to help categorize it.
+     *
+     * @param id           Identifier.
+     * @param eventAction  Audit action.
+     * @param happenedAt   When this event took place.
+     * @param eventOutcome Outcome of the event.
+     * @param types        Event classification.
+     * @see AuditAdministrationEventType
+     * @see SecurityAdministrationEventType
+     * @see UserAccessEventType
+     */
+    public Event(Referenceable id,
+                 Referenceable eventAction,
+                 long happenedAt,
+                 Referenceable eventOutcome,
+                 List<? extends Referenceable> types) {
+        this.id = id.toCodeReference();
+        this.eventAction = eventAction.toCodeReference();
+        this.happenedAt = happenedAt;
+        this.eventOutcome = eventOutcome.toCodeReference();
+        this.types = types == null ? Collections.emptyList() : types.stream()
+                .map(Referenceable::toCodeReference)
+                .collect(Collectors.toList());
+    }
+
+    @JsonCreator
+    private static Event json(@JsonProperty("id") CodeReference id,
+                              @JsonProperty("happenedAt") long happenedAt,
+                              @JsonProperty("outcome") CodeReference eventOutcome,
+                              @JsonProperty("action") CodeReference eventAction,
+                              @JsonProperty("types") List<CodeReference> types) {
+        return new Event(id, eventAction, happenedAt, eventOutcome, types);
+    }
 
     /**
      * Define an audit event that took place just now.
@@ -138,11 +186,7 @@ public class Event implements Serializable {
                  long happenedAt,
                  EventOutcome eventOutcome,
                  Referenceable... types) {
-        this.id = id;
-        this.eventAction = eventAction;
-        this.happenedAt = happenedAt;
-        this.eventOutcome = eventOutcome;
-        this.types = Arrays.asList(types);
+        this(id, eventAction, happenedAt, eventOutcome, Arrays.asList(types));
     }
 
     /**
@@ -158,11 +202,7 @@ public class Event implements Serializable {
      * @param eventOutcome Outcome of the event.
      */
     public Event(Categorizable id, EventAction eventAction, long happenedAt, EventOutcome eventOutcome) {
-        this.id = id;
-        this.eventAction = eventAction;
-        this.happenedAt = happenedAt;
-        this.eventOutcome = eventOutcome;
-        this.types = id.categorizedUnder();
+        this(id, eventAction, happenedAt, eventOutcome, id.categorizedUnder());
     }
 
     /**
@@ -175,7 +215,7 @@ public class Event implements Serializable {
     /**
      * @return Sort of action performed (create, read, update, delete, or execute).
      */
-    public EventAction getAction() {
+    public CodeReference getAction() {
         return eventAction;
     }
 
@@ -189,20 +229,42 @@ public class Event implements Serializable {
     /**
      * @return Outcome of the event (success or failure).
      */
-    public EventOutcome getOutcome() {
+    public CodeReference getOutcome() {
         return eventOutcome;
     }
 
-    public List<Referenceable> getTypes() {
+    public List<CodeReference> getTypes() {
         return types;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        Event that = (Event) other;
+        return this.happenedAt == that.happenedAt &&
+                Objects.equals(this.id, that.id) &&
+                Objects.equals(this.eventOutcome, that.eventOutcome) &&
+                Objects.equals(this.eventAction, that.eventAction) &&
+                Objects.equals(this.types, that.types);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, happenedAt, eventOutcome, eventAction, types);
     }
 
     @Override
     public String toString() {
         return "ID:          " + getId() +
-                "\nAction:      " + getAction().getDisplayName() +
+                "\nAction:      " + EventAction.fromReferenceable(getAction())
+                        .map(EventAction::getDisplayName)
+                        .orElse(getAction().getCode()) +
                 "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(happenedAt)) +
-                "\nOutcome:     " + getOutcome().getDisplayName() +
+                "\nOutcome:     " + EventOutcome.fromReferenceable(getOutcome())
+                        .map(EventOutcome::getDisplayName)
+                        .orElse(getOutcome().getCode()) +
                 "\nType:        " + getTypes();
     }
 }

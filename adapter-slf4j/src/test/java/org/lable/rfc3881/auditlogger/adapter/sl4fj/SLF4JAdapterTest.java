@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class SLF4JAdapterTest {
 
         LogEntry logEntry = new LogEntry(
                 new Event(new CodeReference("events", "logon", "log-on"), EventAction.EXECUTE, EventOutcome.SUCCESS),
-                new Principal("bob", null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
+                new Principal("bob", (String) null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
                 null,
                 null,
                 NetworkAccessPoint.byIPAddress("127.0.0.1"),
@@ -54,10 +54,10 @@ public class SLF4JAdapterTest {
                                 DataLifeCycle.ACCESS_OR_USE,
                                 new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
                                 "Bob Jones",
-                                "TEST".getBytes(),
+                                "TEST",
                                 new ParticipantObject.Detail(
                                         new CodeReference("detail", "DT1", "Detail 1"),
-                                        new byte[0]
+                                        "Detail"
                                 ))
                 ),
                 new CodeReference("version", "1", "1")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,27 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
-import org.lable.codesystem.codereference.Referenceable;
-import org.lable.oss.bitsandbytes.ByteConversion;
-import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.referenceableToBytes;
-
 public class HBaseAdapterTest {
+    Random random = new Random();
+    char[] eightIdIshPool = {
+            'x', 'c', 'd', 'f', 'g', 'k', 'm', 'p',
+            'q', 'r', 's', 't', 'v', 'w', 'b', 'z'
+    };
+
     @Test
     @Ignore
-    public void recordTest() throws IOException {
+    public void doubleIdentifierTest() throws IOException {
         AtomicLong uid = new AtomicLong();
 
         Configuration conf = HBaseConfiguration.create();
@@ -58,51 +55,110 @@ public class HBaseAdapterTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("jeroen", "audit_test6"),
+                    () -> TableName.valueOf("jeroen", "audit_test"),
+                    () -> "a",
+                    () -> Bytes.toBytes(uid.getAndIncrement())
+            );
+
+            long instant = System.currentTimeMillis() - 1_000_000;
+
+            LogEntry logEntry = new LogEntry(
+                    randomEvent(instant),
+                    randomPrincipal(),
+                    randomPrincipal(),
+                    Arrays.asList(randomPrincipal(), randomPrincipal()),
+                    NetworkAccessPoint.byIPAddress("127.0.0.1"),
+                    Collections.singletonList(
+                            new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
+                    ),
+                    Arrays.asList(
+                            new ParticipantObject(
+                                    "XXX",
+                                    ParticipantObjectType.SYSTEM_OBJECT,
+                                    new CodeReference("org.lable.test", "test"),
+                                    null,
+                                    DataLifeCycle.ACCESS_OR_USE,
+                                    null,
+                                    null,
+                                    null
+                            ),
+                            new ParticipantObject(
+                                    "XXX",
+                                    ParticipantObjectType.SYSTEM_OBJECT,
+                                    new CodeReference("org.lable.test", "test"),
+                                    null,
+                                    DataLifeCycle.ACCESS_OR_USE,
+                                    null,
+                                    null,
+                                    null
+                            )
+                    ),
+                    new CodeReference("version", "1", "1")
+            );
+
+            auditLogAdapter.record(logEntry);
+        }
+    }
+
+    @Test
+    @Ignore
+    public void recordTest() throws IOException {
+        AtomicLong uid = new AtomicLong();
+
+        List<Principal> principals = new ArrayList<>();
+        for (int i = 0; i < 200; i++) {
+            principals.add(randomPrincipal());
+        }
+        List<ParticipantObject> clients = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            clients.add(randomClient());
+        }
+
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
+        try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
+
+            AuditLogAdapter auditLogAdapter = new HBaseAdapter(
+                    tableName -> {
+                        try {
+                            return hConnection.getTable(tableName);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    () -> TableName.valueOf("jeroen", "audit_test5"),
                     () -> "a",
                     () -> Bytes.toBytes(uid.getAndIncrement())
             );
 
             long instant = System.currentTimeMillis() - 1_000_000;
             for (int i = 0; i < 100_000; i++) {
+                if (i % 5000 == 0) {
+                    System.out.println(">> " + i);
+                }
                 instant += 1;
                 LogEntry logEntry = new LogEntry(
-                        new Event(new CodeReference("events", "logon", "log-on"),
-                                EventAction.EXECUTE, instant, EventOutcome.SUCCESS),
-                        new Principal("bob", null, "Bob Jones", new CodeReference("roles", "user", "authenticated user")),
-                        new Principal("john", null, "John Jones", new CodeReference("roles", "user", "authenticated user")),
-                        Arrays.asList(
-                                new Principal("alice", null, "Alice Jones",
-                                        new CodeReference("roles", "user", "authenticated user")),
-                                new Principal("claire", null, "Claire Jones",
-                                        new CodeReference("roles", "user", "authenticated user"))
-                        ),
+                        randomEvent(instant),
+                        principals.get(random.nextInt(principals.size())),
+                        null,
+                        null,
                         NetworkAccessPoint.byIPAddress("127.0.0.1"),
                         Arrays.asList(
                                 new AuditSource("servercluster1", "tomcat1", AuditSourceType.WEB_SERVER_PROCESS),
                                 new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
                         ),
                         Arrays.asList(
-                                new ParticipantObject("bob",
-                                        ParticipantObjectType.PERSON,
-                                        ParticipantObjectIDType.USER_IDENTIFIER,
-                                        ParticipantObjectTypeRole.USER,
-                                        DataLifeCycle.ACCESS_OR_USE,
-                                        new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
-                                        "Bob Jones",
-                                        "TEST".getBytes(),
-                                        new ParticipantObject.Detail(
-                                                new CodeReference("detail", "DT1", "Detail 1"),
-                                                new byte[0]
-                                        )),
-                                new ParticipantObject("test",
+                                clients.get(random.nextInt(clients.size())),
+                                new ParticipantObject(
+                                        random8idIsh(),
                                         ParticipantObjectType.SYSTEM_OBJECT,
-                                        ParticipantObjectIDType.REPORT_NAME,
+                                        new CodeReference("org.lable.model", "report"),
                                         ParticipantObjectTypeRole.DATA_REPOSITORY,
                                         DataLifeCycle.ACCESS_OR_USE,
                                         null,
-                                        "Test",
-                                        null)
+                                        "20190527T1030",
+                                        null
+                                )
                         ),
                         new CodeReference("version", "1", "1")
                 );
@@ -112,67 +168,151 @@ public class HBaseAdapterTest {
         }
     }
 
-    @Test
-    @Ignore
-    public void rawTest() throws IOException {
-        byte[] bEvents = ByteConversion.fromString("events");
-        byte[] bLogon = ByteConversion.fromString("logon");
-        byte[] cf = ByteConversion.fromString("a");
-        byte[] bNet = ByteConversion.fromString("net");
-        byte[] bNetVal = ByteConversion.fromString("127.0.0.1");
-        byte[] bEvent = ByteConversion.fromString("e");
-        byte[] bEventVal = ByteConversion.fromString("le:logon:E:0");
-        byte[] bVersion = ByteConversion.fromString("v");
-        byte[] bVersionVal = ByteConversion.fromString("le:1");
-        byte[] bPrin1 = ByteConversion.fromString("p");
-        byte[] bPrin1Val = ByteConversion.fromString("8-mkmdmgmmmkmpxxmc");
-        byte[] bPrin2 = ByteConversion.fromString("d");
-        byte[] bPrin2Val = ByteConversion.fromString("8-zzzzzzmmmkmpxxmc");
-        byte[] as1 = ByteConversion.fromString("as:0");
-        byte[] as1Val = ByteConversion.fromString("ws:tomcat1");
-        byte[] as2 = ByteConversion.fromString("as:1");
-        byte[] as2Val = ByteConversion.fromString("ss:authserver");
-        byte[] po1 = ByteConversion.fromString("po:0");
-        byte[] po1Val = ByteConversion.fromString("8-xxxxxzmmmkmpxxmc:P:le1:user:A:TOPSECRET:details1");
-        byte[] po2 = ByteConversion.fromString("po:1");
-        byte[] po2Val = ByteConversion.fromString("8-ccccczmmmkmpxxmc:S:le1:data:A");
+    private ParticipantObject randomClient() {
+        return new ParticipantObject(
+                "xxx-xxx-prod//" + random8idIsh(),
+                ParticipantObjectType.PERSON,
+                ParticipantObjectIDType.ACCOUNT_NUMBER,
+                ParticipantObjectTypeRole.USER,
+                DataLifeCycle.ACCESS_OR_USE,
+                null,
+                randomName(),
+                null,
+                new ParticipantObject.Detail(
+                        new CodeReference("org.lable.audit.ids", "legacy-key"),
+                        "xxx-xxx-prod//k/" + randomLegacyKeyIsh("Account")
+                ),
+                new ParticipantObject.Detail(
+                        new CodeReference("org.lable.audit.ids", "bsn"),
+                        "926346347"
+                )
+        );
+    }
 
-        Configuration conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
-        try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
-            Table table = hConnection.getTable(TableName.valueOf("jeroen", "audit_test4"));
-            long instant = System.currentTimeMillis() - 1_000;
-            for (int i = 0; i < 100_000; i++) {
-                instant += 1;
-                byte[] row = ByteMangler.add(
-                        ByteMangler.reverse(ByteConversion.fromLong(instant)),
-                        bEvents,
-                        new byte[0],
-                        bLogon
-                );
-                Put put = new Put(row);
-                put.addColumn(cf, bNet, bNetVal);
-                put.addColumn(cf, bEvent, bEventVal);
-                put.addColumn(cf, bEvent, bEventVal);
-                put.addColumn(cf, bVersion, bVersionVal);
-                put.addColumn(cf, bPrin1, bPrin1Val);
-                put.addColumn(cf, bPrin2, bPrin2Val);
-                put.addColumn(cf, as1, as1Val);
-                put.addColumn(cf, as2, as2Val);
-                put.addColumn(cf, po1, po1Val);
-                put.addColumn(cf, po2, po2Val);
+    private Principal randomPrincipal() {
+        String id = "xxx-xxx-prod//" + random8idIsh();
+        String name = randomName();
 
-                table.put(put);
+        return new Principal(
+                id,
+                Arrays.asList(
+                        "xxx-xxx-prod//k/" + randomLegacyKeyIsh("Account"),
+                        "xxx-xxx-prod//u/" + name.toLowerCase().replace(' ', '.')
+                ),
+                name,
+                new CodeReference("roles", "is-employee")
+        );
+    }
+
+    ParticipantObject plain() {
+        return new ParticipantObject(
+                "xxx-xxx-prod//8-mkmdmgmmmkmpxxmc",
+                ParticipantObjectType.PERSON,
+                ParticipantObjectIDType.ACCOUNT_NUMBER,
+                ParticipantObjectTypeRole.USER,
+                DataLifeCycle.ACCESS_OR_USE,
+                null,
+                null,
+                null
+        );
+    }
+
+    ParticipantObject fleshedOut() {
+        return new ParticipantObject(
+                "xxx-xxx-prod//8-mkmdmgmmmkmpxxmc",
+                ParticipantObjectType.PERSON,
+                ParticipantObjectIDType.ACCOUNT_NUMBER,
+                ParticipantObjectTypeRole.USER,
+                DataLifeCycle.ACCESS_OR_USE,
+                null,
+                "Bob van der Testdäta",
+                null,
+                new ParticipantObject.Detail(
+                        new CodeReference("org.lable.audit.ids", "user"),
+                        "xxx-xxx-prod//k/Account_0_a8855327e7f5414dbf8e480d2df88b0b"
+                ),
+                new ParticipantObject.Detail(
+                        new CodeReference("org.lable.audit.ids", "user"),
+                        "xxx-xxx-prod//u/bob.vandertestdata"
+                )
+        );
+    }
+
+    Event randomEvent(long happenedAt) {
+        boolean login = random.nextInt(100) < 5;
+        if (login) {
+            boolean success = random.nextInt(100) < 95;
+            return new Event(
+                    new CodeReference(
+                            "org.lable.auditevents",
+                            "SIGN_ON@USERNAME+PASSWORD"
+                    ),
+                    EventAction.EXECUTE,
+                    happenedAt,
+                    success ? EventOutcome.SUCCESS : EventOutcome.MAJOR_FAILURE
+            );
+        } else {
+            int actInt = random.nextInt(100);
+            EventAction action = EventAction.READ;
+            if (actInt > 90) {
+                action = EventAction.UPDATE;
+            } else if (actInt > 70) {
+                action = EventAction.CREATE;
+            } else if (actInt > 65) {
+                action = EventAction.DELETE;
             }
+
+            actInt = random.nextInt(100);
+            String resource = "client";
+            if (actInt > 60) {
+                resource = "journal";
+            } else if (actInt > 40) {
+                resource = "risk";
+            }
+
+            return new Event(
+                    new CodeReference(
+                            "org.lable.auditevents.resource",
+                            "/api/v1/" + resource + "/" + random8idIsh()
+                    ),
+                    action,
+                    happenedAt,
+                    EventOutcome.SUCCESS
+            );
         }
     }
 
-    @Test
-    public void referenceableToBytesTest() {
-        final Referenceable codeReference = new CodeReference("CS", "00", "Zeroes");
-        final byte[] template = "CS00".getBytes();
-        final byte[] expected = new byte[]{template[0], template[1], 0x0, template[2], template[3]};
+    public String random8idIsh() {
+        StringBuilder id = new StringBuilder("8-");
+        for (int i = 0; i < 16; i++) {
+            id.append(eightIdIshPool[random.nextInt(16)]);
+        }
 
-        assertThat(referenceableToBytes(codeReference), is(expected));
+        return id.toString();
+    }
+
+    public String randomLegacyKeyIsh(String type) {
+        StringBuilder key = new StringBuilder(type).append("_0_");
+        for (int i = 0; i < 32; i++) {
+            if (i < 10) {
+                key.append(i);
+            } else {
+                key.append((char) ('a' + i - 10));
+            }
+        }
+
+        return key.toString();
+    }
+
+    public String randomName() {
+        StringBuilder name = new StringBuilder();
+        for (int i = 2; i < 3 + random.nextInt(5); i++) {
+            name.append((char) ('A' + random.nextInt(26)));
+            for (int j = 6; j < 8 + random.nextInt(25); j++) {
+                name.append((char) ('a' + random.nextInt(26)));
+            }
+            name.append(' ');
+        }
+        return name.toString().trim();
     }
 }

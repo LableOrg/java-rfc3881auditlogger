@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 /**
  * Participant object type. Roughly divides objects in to the categories of persons, system objects, and organizations.
@@ -41,6 +43,8 @@ public enum ParticipantObjectType implements Referenceable {
      */
     OTHER("4", "Other");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.5.5.1";
+
     private final String code;
     private final String displayName;
 
@@ -57,10 +61,24 @@ public enum ParticipantObjectType implements Referenceable {
         return displayName;
     }
 
+    public static Optional<ParticipantObjectType> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (ParticipantObjectType value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.5.5.1",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §5.5.1., Participant Object Type Code",
                 getCode(),
                 getDisplayName(),

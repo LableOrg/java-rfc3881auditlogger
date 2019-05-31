@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+    Copyright (C) 2015 Lable (info@lable.nl)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
     Audit logger that structures audit events in accordance with the IETF RFC 3881 standard for audit messages in
     healthcare applications.
   </description>
+  <inceptionYear>2015</inceptionYear>
 
   <modules>
     <module>api</module>
@@ -47,10 +48,11 @@
     <codesystemutil.version>1.4</codesystemutil.version>
     <slf4j.version>1.7.12</slf4j.version>
     <hbase.version>1.2.0</hbase.version>
-    <jackson.version>2.7.1</jackson.version>
-    <bitsandbytes.version>3.1</bitsandbytes.version>
+    <jackson.version>2.9.8</jackson.version>
+    <bitsandbytes.version>3.6</bitsandbytes.version>
 
     <!-- Testing dependencies. -->
+    <hamcrest.optional>1.0</hamcrest.optional>
     <log4j.version>2.3</log4j.version>
   </properties>
 

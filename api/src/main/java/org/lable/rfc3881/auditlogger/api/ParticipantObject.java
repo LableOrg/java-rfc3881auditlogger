@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.Applicable;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.DataLifeCycle;
@@ -53,7 +56,7 @@ public class ParticipantObject implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.5.4. Participant Object ID Type Code.
      */
-    final Referenceable idType;
+    final CodeReference idType;
 
     /* Optional fields. */
 
@@ -63,14 +66,14 @@ public class ParticipantObject implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.5.1. Participant Object Type Code.
      */
-    final ParticipantObjectType type;
+    final CodeReference type;
 
     /**
      * Code representing the functional application role of Participant Object being audited.
      * <p>
      * IETF/RFC 3881 §5.5.2 Participant Object Type Code Role.
      */
-    final ParticipantObjectTypeRole typeRole;
+    final CodeReference typeRole;
 
     /**
      * Identifier for the data life-cycle stage for the participant object. This can be used to provide an audit trail
@@ -78,7 +81,7 @@ public class ParticipantObject implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.5.3. Participant Object Data Life Cycle.
      */
-    final DataLifeCycle dataLifeCycle;
+    final CodeReference dataLifeCycle;
 
     /**
      * Denotes policy-defined sensitivity for the Participant Object ID such as VIP, HIV status, mental health status,
@@ -88,7 +91,7 @@ public class ParticipantObject implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.5.5. Participant Object Sensitivity.
      */
-    final Referenceable sensitivity;
+    final CodeReference sensitivity;
 
     /**
      * An instance-specific descriptor of the Participant Object ID audited, such as a person's name.
@@ -105,14 +108,38 @@ public class ParticipantObject implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.5.8. Participant Object Query.
      */
-    final byte[] query;
+    final String query;
 
     /**
      * Implementation-defined data about specific details of the object accessed or used.
      * <p>
      * IETF/RFC 3881 §5.5.9. Participant Object Detail.
      */
-    final Map<Referenceable, byte[]> details;
+    final List<Detail> details;
+
+    @JsonCreator
+    private ParticipantObject(@JsonProperty("id") String id,
+                              @JsonProperty("type") CodeReference type,
+                              @JsonProperty("idType") CodeReference idType,
+                              @JsonProperty("typeRole") CodeReference typeRole,
+                              @JsonProperty("dataLifeCycle") CodeReference dataLifeCycle,
+                              @JsonProperty("sensitivity") CodeReference sensitivity,
+                              @JsonProperty("name") String name,
+                              @JsonProperty("query") String query,
+                              @JsonProperty("details") List<Detail> details) {
+        parameterMayNotBeNull("id", id);
+        parameterMayNotBeNull("idType", idType);
+
+        this.id = id;
+        this.type = type;
+        this.typeRole = typeRole;
+        this.idType = idType;
+        this.dataLifeCycle = dataLifeCycle;
+        this.name = name;
+        this.sensitivity = sensitivity;
+        this.query = query;
+        this.details = details == null ? Collections.emptyList() : details;
+    }
 
     /**
      * Define a participant object.
@@ -137,7 +164,7 @@ public class ParticipantObject implements Identifiable, Serializable {
                              DataLifeCycle dataLifeCycle,
                              Referenceable sensitivity,
                              String name,
-                             byte[] query,
+                             String query,
                              Detail... details) {
 
         parameterMayNotBeNull("id", id);
@@ -149,17 +176,19 @@ public class ParticipantObject implements Identifiable, Serializable {
             verifyApplicability("idType", idType, type);
             verifyApplicability("typeRole", typeRole, type);
         }
-        this.type = type;
-        this.typeRole = typeRole;
-        this.idType = idType;
-        this.dataLifeCycle = dataLifeCycle;
+
+        this.type = type == null ? null : type.toCodeReference();
+        this.typeRole = typeRole == null ? null : typeRole.toCodeReference();
+        this.idType = idType.toCodeReference();
+        this.dataLifeCycle = dataLifeCycle == null ? null : dataLifeCycle.toCodeReference();
         this.name = name;
-        this.sensitivity = sensitivity;
+        this.sensitivity = sensitivity == null ? null : sensitivity.toCodeReference();
         this.query = query;
 
-        this.details = new HashMap<>();
-        for (Detail detail : details) {
-            this.details.put(detail.getType(), detail.getValue());
+        if (details != null) {
+            this.details = Arrays.asList(details);
+        } else {
+            this.details = Collections.emptyList();
         }
     }
 
@@ -180,11 +209,11 @@ public class ParticipantObject implements Identifiable, Serializable {
         }
     }
 
-    public ParticipantObjectType getType() {
+    public CodeReference getType() {
         return type;
     }
 
-    public ParticipantObjectTypeRole getTypeRole() {
+    public CodeReference getTypeRole() {
         return typeRole;
     }
 
@@ -196,7 +225,7 @@ public class ParticipantObject implements Identifiable, Serializable {
         return idType;
     }
 
-    public DataLifeCycle getDataLifeCycle() {
+    public CodeReference getDataLifeCycle() {
         return dataLifeCycle;
     }
 
@@ -208,11 +237,11 @@ public class ParticipantObject implements Identifiable, Serializable {
         return name;
     }
 
-    public byte[] getQuery() {
+    public String getQuery() {
         return query;
     }
 
-    public Map<Referenceable, byte[]> getDetails() {
+    public List<Detail> getDetails() {
         return details;
     }
 
@@ -227,6 +256,28 @@ public class ParticipantObject implements Identifiable, Serializable {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        ParticipantObject that = (ParticipantObject) other;
+        return Objects.equals(this.id, that.id) &&
+                Objects.equals(this.idType, that.idType) &&
+                Objects.equals(this.type, that.type) &&
+                Objects.equals(this.typeRole, that.typeRole) &&
+                Objects.equals(this.dataLifeCycle, that.dataLifeCycle) &&
+                Objects.equals(this.sensitivity, that.sensitivity) &&
+                Objects.equals(this.name, that.name) &&
+                Objects.equals(this.query, that.query) &&
+                Objects.equals(this.details, that.details);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, idType, type, typeRole, dataLifeCycle, sensitivity, name, query, details);
+    }
+
+    @Override
     public String toString() {
         return "ID:          " + getId() +
                 "\nID type:     " + getIdType() +
@@ -235,9 +286,8 @@ public class ParticipantObject implements Identifiable, Serializable {
                 (getDataLifeCycle() == null ? "" : "\nLife cycle:  " + getDataLifeCycle()) +
                 (getSensitivity() == null ? "" : "\nSensitivity: " + getSensitivity()) +
                 (getName() == null ? "" : "\nName:        " + getName()) +
-                (getQuery() == null || getQuery().length == 0
-                        ? "" : "\nQuery:       " + getQuery().length + " bytes set") +
-                (getDetails() == null ? "" : "\nDetails:     " + getDetails().keySet());
+                (getQuery() == null ? "" : "\nQuery:       " + getQuery()) +
+                (getDetails() == null ? "" : "\nDetails:     " + getDetails().size());
     }
 
     /**
@@ -246,9 +296,16 @@ public class ParticipantObject implements Identifiable, Serializable {
      * The byte value of this class may be interpreted by audit log analyzers at a later stage.
      */
     public static class Detail {
-        final Referenceable type;
+        final CodeReference type;
 
-        final byte[] value;
+        final String value;
+
+        @JsonCreator
+        private Detail(@JsonProperty("type") CodeReference type,
+                       @JsonProperty("value") String value) {
+            this.type = type;
+            this.value = value;
+        }
 
         /**
          * Define a detail.
@@ -256,21 +313,37 @@ public class ParticipantObject implements Identifiable, Serializable {
          * @param type  Code reference.
          * @param value Value.
          */
-        public Detail(Referenceable type, byte[] value) {
-            this.type = type;
+        public Detail(Referenceable type, String value) {
+            this.type = type.toCodeReference();
             this.value = value;
         }
 
-        public Referenceable getType() {
+        public CodeReference getType() {
             return type;
         }
 
-        public byte[] getValue() {
+        public String getValue() {
             return value;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+
+            Detail that = (Detail) other;
+            return Objects.equals(this.type, that.type) &&
+                    Objects.equals(this.value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, value);
+        }
+
         @Override
         public String toString() {
-            return getType().toCodeReference().toString();
+            return getType().toString() + ":" + getValue();
         }
     }
 }

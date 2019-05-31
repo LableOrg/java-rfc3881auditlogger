@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.AuditSourceType;
@@ -23,6 +26,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
 
@@ -61,7 +66,18 @@ public class AuditSource implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.4.3. Audit Source Type Code
      */
-    final List<Referenceable> typeCodes;
+    final List<CodeReference> typeCodes;
+
+    @JsonCreator
+    private AuditSource(@JsonProperty("enterpriseSiteId") String enterpriseSiteId,
+                        @JsonProperty("id") String id,
+                        @JsonProperty("typeCodes") List<CodeReference> typeCodes) {
+        parameterMayNotBeNull("id", id);
+
+        this.typeCodes = defaultIfEmpty(typeCodes);
+        this.enterpriseSiteId = enterpriseSiteId;
+        this.id = id;
+    }
 
     /**
      * Define an audit source. The type codes defined in {@link AuditSourceType} can be used here to specify the type
@@ -74,15 +90,22 @@ public class AuditSource implements Identifiable, Serializable {
     public AuditSource(String enterpriseSiteId, String id, Referenceable... typeCodes) {
         parameterMayNotBeNull("id", id);
 
-        if (typeCodes == null || typeCodes.length == 0) {
-            // Default to predefined "unknown" type if not set.
-            this.typeCodes = Collections.singletonList((Referenceable) AuditSourceType.EXTERNAL_UNKNOWN_OR_OTHER);
-        } else {
-            this.typeCodes = Arrays.asList(typeCodes);
-        }
+        List<CodeReference> typeCodesCR = (typeCodes == null)
+                ? typeCodesCR = Collections.emptyList()
+                : Arrays.stream(typeCodes)
+                .map(Referenceable::toCodeReference)
+                .collect(Collectors.toList());
 
+        this.typeCodes = defaultIfEmpty(typeCodesCR);
         this.enterpriseSiteId = enterpriseSiteId;
         this.id = id;
+    }
+
+    private List<CodeReference> defaultIfEmpty(List<CodeReference> typeCodes) {
+        // Default to predefined "unknown" type if not set.
+        return typeCodes == null || typeCodes.size() == 0
+                ? Collections.singletonList(AuditSourceType.EXTERNAL_UNKNOWN_OR_OTHER.toCodeReference())
+                : typeCodes;
     }
 
     public String getId() {
@@ -93,7 +116,7 @@ public class AuditSource implements Identifiable, Serializable {
         return enterpriseSiteId;
     }
 
-    public List<Referenceable> getTypeCodes() {
+    public List<CodeReference> getTypeCodes() {
         return typeCodes;
     }
 
@@ -103,6 +126,22 @@ public class AuditSource implements Identifiable, Serializable {
     @Override
     public List<String> identifyingStack() {
         return Arrays.asList(getEnterpriseSiteId(), getId());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        AuditSource that = (AuditSource) other;
+        return Objects.equals(this.id, that.id) &&
+                Objects.equals(this.enterpriseSiteId, that.enterpriseSiteId) &&
+                Objects.equals(this.typeCodes, that.typeCodes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, enterpriseSiteId, typeCodes);
     }
 
     @Override

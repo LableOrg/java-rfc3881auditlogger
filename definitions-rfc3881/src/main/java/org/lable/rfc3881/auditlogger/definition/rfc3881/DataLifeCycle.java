@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 /**
  * Identifier for the data life-cycle stage.
@@ -85,6 +87,8 @@ public enum DataLifeCycle implements Referenceable {
      */
     PERMANENT_ERASURE_OR_PHYSICAL_DESTRUCTION("15", "Permanent erasure / Physical destruction");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.5.5.3";
+
     private final String code;
     private final String displayName;
 
@@ -101,10 +105,24 @@ public enum DataLifeCycle implements Referenceable {
         return displayName;
     }
 
+    public static Optional<DataLifeCycle> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (DataLifeCycle value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.5.5.3",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §5.5.3. Participant Object Data Life Cycle",
                 getCode(),
                 getDisplayName(),

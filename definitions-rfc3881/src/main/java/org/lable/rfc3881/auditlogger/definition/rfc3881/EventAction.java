@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 /**
  * Event action.
@@ -47,6 +49,8 @@ public enum EventAction implements Referenceable {
      */
     EXECUTE('E', "Execute");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.5.1.2";
+
     private final char code;
     private final String displayName;
 
@@ -66,10 +70,25 @@ public enum EventAction implements Referenceable {
         return displayName;
     }
 
+    public static Optional<EventAction> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null || code.length() != 1) return Optional.empty();
+        char c = code.charAt(0);
+
+        for (EventAction value : values()) {
+            if (value.getCode() == c) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.5.1.2",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §5.1.2., Event Action Code",
                 String.valueOf(getCode()),
                 getDisplayName(),

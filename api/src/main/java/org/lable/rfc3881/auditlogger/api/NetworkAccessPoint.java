@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
+import org.lable.codesystem.codereference.Referenceable;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.NetworkAccessPointType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.parameterMayNotBeNull;
 
@@ -38,7 +42,7 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      * <p>
      * IETF/RFC 3881 §5.3.1. Network Access Point Type Code.
      */
-    private final NetworkAccessPointType type;
+    private final CodeReference type;
 
     /**
      * An identifier for the network access point of the user device for the audit event.  This could be a device id, IP
@@ -48,9 +52,16 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      */
     private final String id;
 
-    NetworkAccessPoint(NetworkAccessPointType type, String id) {
+    @JsonCreator
+    NetworkAccessPoint(@JsonProperty("type") CodeReference type,
+                       @JsonProperty("id") String id) {
         this.type = type;
         this.id = id;
+    }
+
+    NetworkAccessPoint(@JsonProperty("type") Referenceable type,
+                       @JsonProperty("id") String id) {
+        this(type.toCodeReference(), id);
     }
 
     /**
@@ -86,7 +97,7 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
         return new NetworkAccessPoint(NetworkAccessPointType.TELEPHONE_NUMBER, telephoneNumber);
     }
 
-    public NetworkAccessPointType getType() {
+    public CodeReference getType() {
         return type;
     }
 
@@ -102,6 +113,21 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
         List<String> parts = new ArrayList<>(getType().toCodeReference().identifyingStack());
         parts.add(getId());
         return parts;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        NetworkAccessPoint that = (NetworkAccessPoint) other;
+        return Objects.equals(this.type, that.type) &&
+                Objects.equals(this.id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, id);
     }
 
     @Override

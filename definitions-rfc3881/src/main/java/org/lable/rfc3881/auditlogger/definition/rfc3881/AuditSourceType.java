@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
+
+import java.util.Optional;
 
 /**
  * Default codes for audit source types.
@@ -61,6 +63,8 @@ public enum AuditSourceType implements Referenceable {
      */
     EXTERNAL_UNKNOWN_OR_OTHER("9", "External source, other or unknown type");
 
+    static final String CODE_SYSTEM = "IETF/RFC3881.5.4.3";
+
     private final String code;
     private final String displayName;
 
@@ -77,10 +81,24 @@ public enum AuditSourceType implements Referenceable {
         return displayName;
     }
 
+    public static Optional<AuditSourceType> fromReferenceable(Referenceable referenceable) {
+        CodeReference cs = referenceable.toCodeReference();
+        if (!cs.getCodeSystem().equals(CODE_SYSTEM)) return Optional.empty();
+
+        String code = cs.getCode();
+        if (code == null) return Optional.empty();
+
+        for (AuditSourceType value : values()) {
+            if (value.getCode().equals(code)) return Optional.of(value);
+        }
+
+        return Optional.empty();
+    }
+
     @Override
     public CodeReference toCodeReference() {
         return new CodeReference(
-                "IETF/RFC3881.5.4.3",
+                CODE_SYSTEM,
                 "IETF/RFC 3881, §5.4.3., Default Audit Source Type Codes",
                 getCode(),
                 getDisplayName(),

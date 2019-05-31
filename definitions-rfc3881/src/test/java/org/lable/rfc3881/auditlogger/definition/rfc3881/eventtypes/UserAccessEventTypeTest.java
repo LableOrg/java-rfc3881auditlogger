@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes;
 
 import org.junit.Test;
+import org.lable.codesystem.codereference.CodeReference;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.github.npathai.hamcrestopt.OptionalMatchers.hasValue;
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import static org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEventType.*;
 
 public class UserAccessEventTypeTest {
     @Test
@@ -37,6 +41,15 @@ public class UserAccessEventTypeTest {
 
         assertThat(codes.size(), is(UserAccessEventType.values().length));
         assertThat(displayNames.size(), is(UserAccessEventType.values().length));
+    }
+
+    @Test
+    public void fromReferenceableTest() {
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "SIGN_ON")), hasValue(SIGN_ON));
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "MEDICATIONS")), hasValue(MEDICATIONS));
+
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "?")), isEmpty());
+        assertThat(fromReferenceable(new CodeReference("?", "MEDICATIONS")), isEmpty());
     }
 
     @Test

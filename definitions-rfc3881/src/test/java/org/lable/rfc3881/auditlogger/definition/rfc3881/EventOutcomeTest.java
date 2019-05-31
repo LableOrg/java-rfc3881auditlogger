@@ -1,5 +1,5 @@
 /*
- * Copyright (C) ${project.inceptionYear} Lable (info@lable.nl)
+ * Copyright (C) 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 package org.lable.rfc3881.auditlogger.definition.rfc3881;
 
 import org.junit.Test;
+import org.lable.codesystem.codereference.CodeReference;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.github.npathai.hamcrestopt.OptionalMatchers.hasValue;
+import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import static org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome.*;
+import static org.lable.rfc3881.auditlogger.definition.rfc3881.EventOutcome.fromReferenceable;
 
 public class EventOutcomeTest {
     @Test
@@ -30,19 +35,31 @@ public class EventOutcomeTest {
         Set<Integer> codes = new HashSet<>();
         Set<String> displayNames = new HashSet<>();
 
-        for (EventOutcome eventOutcome : EventOutcome.values()) {
+        for (EventOutcome eventOutcome : values()) {
             codes.add(eventOutcome.getCode());
             displayNames.add(eventOutcome.getDisplayName());
         }
 
-        assertThat(codes.size(), is(EventOutcome.values().length));
-        assertThat(displayNames.size(), is(EventOutcome.values().length));
+        assertThat(codes.size(), is(values().length));
+        assertThat(displayNames.size(), is(values().length));
+    }
+
+    @Test
+    public void fromReferenceableTest() {
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "0")), hasValue(SUCCESS));
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "4")), hasValue(MINOR_FAILURE));
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "8")), hasValue(SERIOUS_FAILURE));
+        assertThat(fromReferenceable(new CodeReference(CODE_SYSTEM, "12")), hasValue(MAJOR_FAILURE));
+
+        assertThat(fromReferenceable(new CodeReference(EventAction.CODE_SYSTEM, "6")), isEmpty());
+        assertThat(fromReferenceable(new CodeReference(EventAction.CODE_SYSTEM, "?")), isEmpty());
+        assertThat(fromReferenceable(new CodeReference("?", "0")), isEmpty());
     }
 
     @Test
     public void toStringTest() {
         // Defer to CodeReference for toString.
-        for (EventOutcome eventOutcome : EventOutcome.values()) {
+        for (EventOutcome eventOutcome : values()) {
             assertThat(eventOutcome.toString(), is(eventOutcome.toCodeReference().toString()));
         }
     }
@@ -50,8 +67,8 @@ public class EventOutcomeTest {
     @Test
     public void valueOfTest() {
         // Test equality and valueOf.
-        for (EventOutcome eventOutcome : EventOutcome.values()) {
-            assertThat(EventOutcome.valueOf(eventOutcome.name()), is(eventOutcome));
+        for (EventOutcome eventOutcome : values()) {
+            assertThat(valueOf(eventOutcome.name()), is(eventOutcome));
         }
     }
 }
