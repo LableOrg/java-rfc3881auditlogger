@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
+import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.INCOMPLETE_MARKER;
 
 /**
  * Retrieves {@link LogEntry} written to HBase by {@link HBaseAdapter}.
@@ -143,10 +144,12 @@ public class HBaseReader implements AuditLogReader {
         List<T> list = new ArrayList<>();
 
         byte[] prefixBytes = ByteConversion.fromString(columnPrefix);
+        byte[] incompletePrefixBytes = ByteMangler.add(INCOMPLETE_MARKER, prefixBytes);
         for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-            if (ByteComparison.startsWith(entry.getKey(), prefixBytes)) {
+            byte[] key = entry.getKey();
+            if (ByteComparison.startsWith(key, prefixBytes) || ByteComparison.startsWith(key, incompletePrefixBytes)) {
                 byte[] value = entry.getValue();
-                if (value == null) return null;
+                if (value == null) continue;
 
                 try {
                     T v = objectMapper.readValue(value, objectType);
@@ -173,8 +176,10 @@ public class HBaseReader implements AuditLogReader {
                                String columnPrefix) {
 
         byte[] prefixBytes = ByteConversion.fromString(columnPrefix);
+        byte[] incompletePrefixBytes = ByteMangler.add(INCOMPLETE_MARKER, prefixBytes);
         for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-            if (ByteComparison.startsWith(entry.getKey(), prefixBytes)) {
+            byte[] key = entry.getKey();
+            if (ByteComparison.startsWith(key, prefixBytes) || ByteComparison.startsWith(key, incompletePrefixBytes)) {
                 byte[] value = entry.getValue();
                 if (value == null) return null;
 

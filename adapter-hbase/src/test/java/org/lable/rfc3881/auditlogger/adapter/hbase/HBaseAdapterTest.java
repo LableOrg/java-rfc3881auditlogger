@@ -55,7 +55,7 @@ public class HBaseAdapterTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("jeroen", "audit_test"),
+                    () -> TableName.valueOf("jeroen", "audit_test2"),
                     () -> "a",
                     () -> Bytes.toBytes(uid.getAndIncrement())
             );
@@ -67,9 +67,9 @@ public class HBaseAdapterTest {
                     randomPrincipal(),
                     randomPrincipal(),
                     Arrays.asList(randomPrincipal(), randomPrincipal()),
-                    NetworkAccessPoint.byIPAddress("127.0.0.1"),
+                    NetworkAccessPoint.byIPAddress("127.0.0.1", true),
                     Collections.singletonList(
-                            new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
+                            new AuditSource("servercluster1", "authserver", true, AuditSourceType.SECURITY_SERVER)
                     ),
                     Arrays.asList(
                             new ParticipantObject(
@@ -80,7 +80,8 @@ public class HBaseAdapterTest {
                                     DataLifeCycle.ACCESS_OR_USE,
                                     null,
                                     null,
-                                    null
+                                    null,
+                                    true
                             ),
                             new ParticipantObject(
                                     "XXX",
@@ -142,9 +143,9 @@ public class HBaseAdapterTest {
                         principals.get(random.nextInt(principals.size())),
                         null,
                         null,
-                        NetworkAccessPoint.byIPAddress("127.0.0.1"),
+                        NetworkAccessPoint.byIPAddress("127.0.0.1", false),
                         Arrays.asList(
-                                new AuditSource("servercluster1", "tomcat1", AuditSourceType.WEB_SERVER_PROCESS),
+                                new AuditSource("servercluster1", "tomcat1", false, AuditSourceType.WEB_SERVER_PROCESS),
                                 new AuditSource("servercluster1", "authserver", AuditSourceType.SECURITY_SERVER)
                         ),
                         Arrays.asList(
@@ -157,7 +158,8 @@ public class HBaseAdapterTest {
                                         DataLifeCycle.ACCESS_OR_USE,
                                         null,
                                         "20190527T1030",
-                                        null
+                                        null,
+                                        false
                                 )
                         ),
                         new CodeReference("version", "1", "1")
@@ -200,6 +202,7 @@ public class HBaseAdapterTest {
                         "xxx-xxx-prod//u/" + name.toLowerCase().replace(' ', '.')
                 ),
                 name,
+                true,
                 new CodeReference("roles", "is-employee")
         );
     }
@@ -213,7 +216,8 @@ public class HBaseAdapterTest {
                 DataLifeCycle.ACCESS_OR_USE,
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 

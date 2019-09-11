@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
@@ -39,7 +40,8 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in RFC 3881 §5.4. Audit Source Identification.
  */
-public class AuditSource implements Identifiable, Serializable {
+@JsonFilter("logFilter")
+public class AuditSource implements EntryPart, Identifiable, Serializable {
     private static final long serialVersionUID = 1287102005812178285L;
 
     /* Required fields. */
@@ -68,14 +70,45 @@ public class AuditSource implements Identifiable, Serializable {
      */
     final List<CodeReference> typeCodes;
 
+    /**
+     * Mark this log entry part as complete or in need of further refinement further down the processing chain.
+     */
+    final boolean complete;
+
     @JsonCreator
     private AuditSource(@JsonProperty("enterpriseSiteId") String enterpriseSiteId,
                         @JsonProperty("id") String id,
+                        @JsonProperty("complete") Boolean complete,
                         @JsonProperty("typeCodes") List<CodeReference> typeCodes) {
         parameterMayNotBeNull("id", id);
 
         this.typeCodes = defaultIfEmpty(typeCodes);
         this.enterpriseSiteId = enterpriseSiteId;
+        this.id = id;
+        this.complete = complete == null || complete;
+    }
+
+    /**
+     * Define an audit source. The type codes defined in {@link AuditSourceType} can be used here to specify the type
+     * of audit source, but custom code references may be used as well.
+     *
+     * @param enterpriseSiteId Logical identifier of your server cluster or network.
+     * @param id               Identifier.
+     * @param complete         Mark this data as complete, or in need of further refinement.
+     * @param typeCodes        Type of audit source.
+     */
+    public AuditSource(String enterpriseSiteId, String id, boolean complete, Referenceable... typeCodes) {
+        parameterMayNotBeNull("id", id);
+
+        List<CodeReference> typeCodesCR = (typeCodes == null)
+                ? typeCodesCR = Collections.emptyList()
+                : Arrays.stream(typeCodes)
+                .map(Referenceable::toCodeReference)
+                .collect(Collectors.toList());
+
+        this.typeCodes = defaultIfEmpty(typeCodesCR);
+        this.enterpriseSiteId = enterpriseSiteId;
+        this.complete = complete;
         this.id = id;
     }
 
@@ -88,17 +121,7 @@ public class AuditSource implements Identifiable, Serializable {
      * @param typeCodes        Type of audit source.
      */
     public AuditSource(String enterpriseSiteId, String id, Referenceable... typeCodes) {
-        parameterMayNotBeNull("id", id);
-
-        List<CodeReference> typeCodesCR = (typeCodes == null)
-                ? typeCodesCR = Collections.emptyList()
-                : Arrays.stream(typeCodes)
-                .map(Referenceable::toCodeReference)
-                .collect(Collectors.toList());
-
-        this.typeCodes = defaultIfEmpty(typeCodesCR);
-        this.enterpriseSiteId = enterpriseSiteId;
-        this.id = id;
+        this(enterpriseSiteId, id, true, typeCodes);
     }
 
     private List<CodeReference> defaultIfEmpty(List<CodeReference> typeCodes) {
@@ -128,6 +151,14 @@ public class AuditSource implements Identifiable, Serializable {
         return Arrays.asList(getEnterpriseSiteId(), getId());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isComplete() {
+        return complete;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
@@ -136,18 +167,20 @@ public class AuditSource implements Identifiable, Serializable {
         AuditSource that = (AuditSource) other;
         return Objects.equals(this.id, that.id) &&
                 Objects.equals(this.enterpriseSiteId, that.enterpriseSiteId) &&
+                this.complete == that.complete &&
                 Objects.equals(this.typeCodes, that.typeCodes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, enterpriseSiteId, typeCodes);
+        return Objects.hash(id, enterpriseSiteId, complete, typeCodes);
     }
 
     @Override
     public String toString() {
         return "ID:          " + getId() +
                 (getEnterpriseSiteId() == null ? "" : "\nSite ID:     " + getEnterpriseSiteId()) +
-                "\nType:        " + (getTypeCodes() == null ? "[]" : getTypeCodes());
+                "\nType:        " + (getTypeCodes() == null ? "[]" : getTypeCodes()) +
+                (complete ? "" : "\nINCOMPLETE");
     }
 }

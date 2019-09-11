@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
@@ -34,7 +35,8 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in IETF/RFC 3881 §5.3. Network Access Point Identification.
  */
-public class NetworkAccessPoint implements Identifiable, Serializable {
+@JsonFilter("logFilter")
+public class NetworkAccessPoint implements EntryPart, Identifiable, Serializable {
     private static final long serialVersionUID = 5288045572514508815L;
 
     /**
@@ -52,16 +54,24 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      */
     private final String id;
 
+    /**
+     * Mark this log entry part as complete or in need of further refinement further down the processing chain.
+     */
+    private final boolean complete;
+
     @JsonCreator
     NetworkAccessPoint(@JsonProperty("type") CodeReference type,
-                       @JsonProperty("id") String id) {
+                       @JsonProperty("id") String id,
+                       @JsonProperty("complete") Boolean complete) {
         this.type = type;
         this.id = id;
+        this.complete = complete == null || complete;
     }
 
-    NetworkAccessPoint(@JsonProperty("type") Referenceable type,
-                       @JsonProperty("id") String id) {
-        this(type.toCodeReference(), id);
+    NetworkAccessPoint(Referenceable type,
+                       String id,
+                       Boolean complete) {
+        this(type.toCodeReference(), id, complete);
     }
 
     /**
@@ -72,7 +82,19 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      */
     public static NetworkAccessPoint byHostName(String hostName) {
         parameterMayNotBeNull("hostName", hostName);
-        return new NetworkAccessPoint(NetworkAccessPointType.MACHINE_NAME, hostName);
+        return new NetworkAccessPoint(NetworkAccessPointType.MACHINE_NAME, hostName, true);
+    }
+
+    /**
+     * Define a network access point by its hostname.
+     *
+     * @param hostName Hostname.
+     * @param complete Mark this data as complete, or in need of further refinement.
+     * @return Network access point definition.
+     */
+    public static NetworkAccessPoint byHostName(String hostName, boolean complete) {
+        parameterMayNotBeNull("hostName", hostName);
+        return new NetworkAccessPoint(NetworkAccessPointType.MACHINE_NAME, hostName, complete);
     }
 
     /**
@@ -83,7 +105,19 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      */
     public static NetworkAccessPoint byIPAddress(String ipAddress) {
         parameterMayNotBeNull("ipAddress", ipAddress);
-        return new NetworkAccessPoint(NetworkAccessPointType.IP_ADDRESS, ipAddress);
+        return new NetworkAccessPoint(NetworkAccessPointType.IP_ADDRESS, ipAddress, true);
+    }
+
+    /**
+     * Define a network access point by its IP address.
+     *
+     * @param ipAddress IP address.
+     * @param complete  Mark this data as complete, or in need of further refinement.
+     * @return Network access point definition.
+     */
+    public static NetworkAccessPoint byIPAddress(String ipAddress, boolean complete) {
+        parameterMayNotBeNull("ipAddress", ipAddress);
+        return new NetworkAccessPoint(NetworkAccessPointType.IP_ADDRESS, ipAddress, complete);
     }
 
     /**
@@ -94,7 +128,19 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
      */
     public static NetworkAccessPoint byTelephoneNumber(String telephoneNumber) {
         parameterMayNotBeNull("telephoneNumber", telephoneNumber);
-        return new NetworkAccessPoint(NetworkAccessPointType.TELEPHONE_NUMBER, telephoneNumber);
+        return new NetworkAccessPoint(NetworkAccessPointType.TELEPHONE_NUMBER, telephoneNumber, true);
+    }
+
+    /**
+     * Define a network access point by its corresponding telephone number.
+     *
+     * @param telephoneNumber Telephone number.
+     * @param complete        Mark this data as complete, or in need of further refinement.
+     * @return Network access point definition.
+     */
+    public static NetworkAccessPoint byTelephoneNumber(String telephoneNumber, boolean complete) {
+        parameterMayNotBeNull("telephoneNumber", telephoneNumber);
+        return new NetworkAccessPoint(NetworkAccessPointType.TELEPHONE_NUMBER, telephoneNumber, complete);
     }
 
     public CodeReference getType() {
@@ -103,6 +149,14 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
 
     public String getId() {
         return id;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isComplete() {
+        return complete;
     }
 
     /**
@@ -122,17 +176,19 @@ public class NetworkAccessPoint implements Identifiable, Serializable {
 
         NetworkAccessPoint that = (NetworkAccessPoint) other;
         return Objects.equals(this.type, that.type) &&
+                this.complete == that.complete &&
                 Objects.equals(this.id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, id);
+        return Objects.hash(type, complete, id);
     }
 
     @Override
     public String toString() {
         return "ID:          " + getId() +
-                "\nType:        " + getType();
+                "\nType:        " + getType() +
+                (complete ? "" : "\nINCOMPLETE");
     }
 }

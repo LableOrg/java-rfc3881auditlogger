@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.Applicable;
 import org.lable.codesystem.codereference.CodeReference;
@@ -36,7 +37,8 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * <p>
  * Defined in RFC 3881 §5.5  Participant Object Identification.
  */
-public class ParticipantObject implements Identifiable, Serializable {
+@JsonFilter("logFilter")
+public class ParticipantObject implements EntryPart, Identifiable, Serializable {
     private static final long serialVersionUID = 2395902234146300877L;
 
     /* Required fields. */
@@ -117,6 +119,11 @@ public class ParticipantObject implements Identifiable, Serializable {
      */
     final List<Detail> details;
 
+    /**
+     * Mark this log entry part as complete or in need of further refinement further down the processing chain.
+     */
+    final boolean complete;
+
     @JsonCreator
     private ParticipantObject(@JsonProperty("id") String id,
                               @JsonProperty("type") CodeReference type,
@@ -126,6 +133,7 @@ public class ParticipantObject implements Identifiable, Serializable {
                               @JsonProperty("sensitivity") CodeReference sensitivity,
                               @JsonProperty("name") String name,
                               @JsonProperty("query") String query,
+                              @JsonProperty("complete") Boolean complete,
                               @JsonProperty("details") List<Detail> details) {
         parameterMayNotBeNull("id", id);
         parameterMayNotBeNull("idType", idType);
@@ -138,7 +146,38 @@ public class ParticipantObject implements Identifiable, Serializable {
         this.name = name;
         this.sensitivity = sensitivity;
         this.query = query;
+        this.complete = complete == null || complete;
         this.details = details == null ? Collections.emptyList() : details;
+    }
+
+    /**
+     * Define a participant object.
+     *
+     * @param id            Identifier (required).
+     * @param type          Type of participant object (person, system object, or organization).
+     * @param idType        Type of the identifier used (required).
+     * @param typeRole      Functional application role of participant object.
+     * @param dataLifeCycle Stage in the data life-cycle of this object.
+     * @param sensitivity   Sensitivity.
+     * @param name          Human readable name for this object.
+     * @param query         Query used to locate this object.
+     * @param complete         Mark this data as complete, or in need of further refinement.
+     * @param details       Additional details relevant to the audit trail.
+     * @throws IllegalArgumentException Thrown when required fields are missing, or if {@link #idType} or
+     *                                  {@link #typeRole} are not applicable to the
+     *                                  {@link ParticipantObjectType} specified in {@link #type}.
+     */
+    public ParticipantObject(String id,
+                             ParticipantObjectType type,
+                             Referenceable idType,
+                             ParticipantObjectTypeRole typeRole,
+                             DataLifeCycle dataLifeCycle,
+                             Referenceable sensitivity,
+                             String name,
+                             String query,
+                             boolean complete,
+                             Detail... details) {
+        this(id, (Referenceable) type, idType, typeRole, dataLifeCycle, sensitivity, name, query, complete, details);
     }
 
     /**
@@ -166,6 +205,64 @@ public class ParticipantObject implements Identifiable, Serializable {
                              String name,
                              String query,
                              Detail... details) {
+        this(id, (Referenceable) type, idType, typeRole, dataLifeCycle, sensitivity, name, query, true, details);
+    }
+
+    /**
+     * Define a participant object.
+     *
+     * @param id            Identifier (required).
+     * @param type          Type of participant object (e.g., person, system object, or organization).
+     * @param idType        Type of the identifier used (required).
+     * @param typeRole      Functional application role of participant object.
+     * @param dataLifeCycle Stage in the data life-cycle of this object.
+     * @param sensitivity   Sensitivity.
+     * @param name          Human readable name for this object.
+     * @param query         Query used to locate this object.
+     * @param details       Additional details relevant to the audit trail.
+     * @throws IllegalArgumentException Thrown when required fields are missing, or if {@link #idType} or
+     *                                  {@link #typeRole} are not applicable to the
+     *                                  {@link ParticipantObjectType} specified in {@link #type}.
+     */
+    public ParticipantObject(String id,
+                             Referenceable type,
+                             Referenceable idType,
+                             Referenceable typeRole,
+                             Referenceable dataLifeCycle,
+                             Referenceable sensitivity,
+                             String name,
+                             String query,
+                             Detail... details) {
+        this(id, type, idType, typeRole, dataLifeCycle, sensitivity, name, query, true, details);
+    }
+
+    /**
+     * Define a participant object.
+     *
+     * @param id            Identifier (required).
+     * @param type          Type of participant object (e.g., person, system object, or organization).
+     * @param idType        Type of the identifier used (required).
+     * @param typeRole      Functional application role of participant object.
+     * @param dataLifeCycle Stage in the data life-cycle of this object.
+     * @param sensitivity   Sensitivity.
+     * @param name          Human readable name for this object.
+     * @param query         Query used to locate this object.
+     * @param complete         Mark this data as complete, or in need of further refinement.
+     * @param details       Additional details relevant to the audit trail.
+     * @throws IllegalArgumentException Thrown when required fields are missing, or if {@link #idType} or
+     *                                  {@link #typeRole} are not applicable to the
+     *                                  {@link ParticipantObjectType} specified in {@link #type}.
+     */
+    public ParticipantObject(String id,
+                             Referenceable type,
+                             Referenceable idType,
+                             Referenceable typeRole,
+                             Referenceable dataLifeCycle,
+                             Referenceable sensitivity,
+                             String name,
+                             String query,
+                             boolean complete,
+                             Detail... details) {
 
         parameterMayNotBeNull("id", id);
         parameterMayNotBeNull("idType", idType);
@@ -184,6 +281,7 @@ public class ParticipantObject implements Identifiable, Serializable {
         this.name = name;
         this.sensitivity = sensitivity == null ? null : sensitivity.toCodeReference();
         this.query = query;
+        this.complete = complete;
 
         if (details != null) {
             this.details = Arrays.asList(details);
@@ -255,6 +353,14 @@ public class ParticipantObject implements Identifiable, Serializable {
         return parts;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isComplete() {
+        return complete;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
@@ -269,12 +375,13 @@ public class ParticipantObject implements Identifiable, Serializable {
                 Objects.equals(this.sensitivity, that.sensitivity) &&
                 Objects.equals(this.name, that.name) &&
                 Objects.equals(this.query, that.query) &&
+                this.complete == that.complete &&
                 Objects.equals(this.details, that.details);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, idType, type, typeRole, dataLifeCycle, sensitivity, name, query, details);
+        return Objects.hash(id, idType, type, typeRole, dataLifeCycle, sensitivity, name, query, complete, details);
     }
 
     @Override
@@ -287,7 +394,8 @@ public class ParticipantObject implements Identifiable, Serializable {
                 (getSensitivity() == null ? "" : "\nSensitivity: " + getSensitivity()) +
                 (getName() == null ? "" : "\nName:        " + getName()) +
                 (getQuery() == null ? "" : "\nQuery:       " + getQuery()) +
-                (getDetails() == null ? "" : "\nDetails:     " + getDetails().size());
+                (getDetails() == null ? "" : "\nDetails:     " + getDetails().size()) +
+                (complete ? "" : "\nINCOMPLETE");
     }
 
     /**

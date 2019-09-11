@@ -115,16 +115,6 @@ public enum ParticipantObjectIDType implements Applicable, Referenceable {
     }
 
     @Override
-    public boolean appliesTo(Referenceable referenceable) {
-        for (ParticipantObjectType applicableType : applicableTypes) {
-            if (applicableType == referenceable) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public Referenceable[] applicableTypes() {
         return applicableTypes;
     }

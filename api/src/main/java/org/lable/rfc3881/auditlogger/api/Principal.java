@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
@@ -34,7 +35,8 @@ import static org.lable.rfc3881.auditlogger.api.util.ParameterValidation.paramet
  * Security identity of a user or automated process. This includes the relevant security roles for the action that
  * was performed.
  */
-public class Principal implements Identifiable, Serializable {
+@JsonFilter("logFilter")
+public class Principal implements EntryPart, Identifiable, Serializable {
     private static final long serialVersionUID = -7367595173448586271L;
 
     /* Required fields. */
@@ -71,6 +73,46 @@ public class Principal implements Identifiable, Serializable {
     final List<CodeReference> relevantRoles;
 
     /**
+     * Mark this log entry part as complete or in need of further refinement further down the processing chain.
+     */
+    final boolean complete;
+
+    /**
+     * Define a principal.
+     *
+     * @param userId          Unique user ID.
+     * @param alternateUserId Synonymous user IDs.
+     * @param name            Human readable name.
+     * @param complete        Mark this data as complete, or in need of further refinement.
+     * @param relevantRoles   List of roles relevant for the action performed.
+     */
+    public Principal(String userId,
+                     List<String> alternateUserId,
+                     String name,
+                     boolean complete,
+                     List<? extends Referenceable> relevantRoles) {
+        parameterMayNotBeNull("userId", userId);
+
+        this.userId = userId;
+        this.alternateUserId = alternateUserId == null ? Collections.emptyList() : alternateUserId;
+        this.name = name;
+        this.complete = complete;
+        this.relevantRoles = relevantRoles == null ? Collections.emptyList() : relevantRoles.stream()
+                .map(Referenceable::toCodeReference)
+                .collect(Collectors.toList());
+    }
+
+    @JsonCreator
+    private static Principal json(@JsonProperty("userId") String userId,
+                                  @JsonProperty("alternateUserId") List<String> alternateUserId,
+                                  @JsonProperty("name") String name,
+                                  @JsonProperty("complete") Boolean complete,
+                                  @JsonProperty("relevantRoles") List<CodeReference> relevantRoles) {
+        complete = complete == null || complete;
+        return new Principal(userId, alternateUserId, name, complete, relevantRoles);
+    }
+
+    /**
      * Define a principal.
      *
      * @param userId          Unique user ID.
@@ -82,22 +124,7 @@ public class Principal implements Identifiable, Serializable {
                      List<String> alternateUserId,
                      String name,
                      List<? extends Referenceable> relevantRoles) {
-        parameterMayNotBeNull("userId", userId);
-
-        this.userId = userId;
-        this.alternateUserId = alternateUserId == null ? Collections.emptyList() : alternateUserId;
-        this.name = name;
-        this.relevantRoles = relevantRoles == null ? Collections.emptyList() : relevantRoles.stream()
-                .map(Referenceable::toCodeReference)
-                .collect(Collectors.toList());
-    }
-
-    @JsonCreator
-    private static Principal json(@JsonProperty("userId") String userId,
-                                  @JsonProperty("alternateUserId") List<String> alternateUserId,
-                                  @JsonProperty("name") String name,
-                                  @JsonProperty("relevantRoles") List<CodeReference> relevantRoles) {
-        return new Principal(userId, alternateUserId, name, relevantRoles);
+        this(userId, alternateUserId, name, true, relevantRoles);
     }
 
     /**
@@ -107,7 +134,24 @@ public class Principal implements Identifiable, Serializable {
      * @param relevantRoles List of roles relevant for the action performed.
      */
     public Principal(String userId, Referenceable... relevantRoles) {
-        this(userId, Collections.emptyList(), null, relevantRoles);
+        this(userId, Collections.emptyList(), null, true, relevantRoles);
+    }
+
+    /**
+     * Define a principal.
+     *
+     * @param userId          Unique user ID.
+     * @param alternateUserId Synonymous user IDs.
+     * @param name            Human readable name.
+     * @param complete        Mark this data as complete, or in need of further refinement.
+     * @param relevantRoles   List of roles relevant for the action performed.
+     */
+    public Principal(String userId,
+                     List<String> alternateUserId,
+                     String name,
+                     boolean complete,
+                     Referenceable... relevantRoles) {
+        this(userId, alternateUserId, name, complete, Arrays.asList(relevantRoles));
     }
 
     /**
@@ -118,8 +162,28 @@ public class Principal implements Identifiable, Serializable {
      * @param name            Human readable name.
      * @param relevantRoles   List of roles relevant for the action performed.
      */
-    public Principal(String userId, List<String> alternateUserId, String name, Referenceable... relevantRoles) {
-        this(userId, alternateUserId, name, Arrays.asList(relevantRoles));
+    public Principal(String userId,
+                     List<String> alternateUserId,
+                     String name,
+                     Referenceable... relevantRoles) {
+        this(userId, alternateUserId, name, true, Arrays.asList(relevantRoles));
+    }
+
+    /**
+     * Define a principal.
+     *
+     * @param userId          Unique user ID.
+     * @param alternateUserId Synonymous user ID.
+     * @param name            Human readable name.
+     * @param complete        Mark this data as complete, or in need of further refinement.
+     * @param relevantRoles   List of roles relevant for the action performed.
+     */
+    public Principal(String userId,
+                     String alternateUserId,
+                     String name,
+                     boolean complete,
+                     Referenceable... relevantRoles) {
+        this(userId, Collections.singletonList(alternateUserId), name, complete, relevantRoles);
     }
 
     /**
@@ -130,8 +194,11 @@ public class Principal implements Identifiable, Serializable {
      * @param name            Human readable name.
      * @param relevantRoles   List of roles relevant for the action performed.
      */
-    public Principal(String userId, String alternateUserId, String name, Referenceable... relevantRoles) {
-        this(userId, Collections.singletonList(alternateUserId), name, relevantRoles);
+    public Principal(String userId,
+                     String alternateUserId,
+                     String name,
+                     Referenceable... relevantRoles) {
+        this(userId, Collections.singletonList(alternateUserId), name, true, relevantRoles);
     }
 
     public String getUserId() {
@@ -154,6 +221,14 @@ public class Principal implements Identifiable, Serializable {
      * {@inheritDoc}
      */
     @Override
+    public boolean isComplete() {
+        return complete;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public List<String> identifyingStack() {
         return Collections.singletonList(getUserId());
     }
@@ -164,15 +239,16 @@ public class Principal implements Identifiable, Serializable {
         if (other == null || getClass() != other.getClass()) return false;
 
         Principal that = (Principal) other;
-        return Objects.equals(userId, that.userId) &&
-                Objects.equals(alternateUserId, that.alternateUserId) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(relevantRoles, that.relevantRoles);
+        return Objects.equals(this.userId, that.userId) &&
+                Objects.equals(this.alternateUserId, that.alternateUserId) &&
+                Objects.equals(this.name, that.name) &&
+                this.complete == that.complete &&
+                Objects.equals(this.relevantRoles, that.relevantRoles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, alternateUserId, name, relevantRoles);
+        return Objects.hash(userId, alternateUserId, name, complete, relevantRoles);
     }
 
     @Override
@@ -182,6 +258,7 @@ public class Principal implements Identifiable, Serializable {
                 (getAlternateUserId().isEmpty()
                         ? ""
                         : "\nAlt ID:      " + String.join("; ", getAlternateUserId())) +
-                "\nRoles:       " + (getRelevantRoles() == null ? "[]" : getRelevantRoles());
+                "\nRoles:       " + (getRelevantRoles() == null ? "[]" : getRelevantRoles()) +
+                (complete ? "" : "\nINCOMPLETE");
     }
 }

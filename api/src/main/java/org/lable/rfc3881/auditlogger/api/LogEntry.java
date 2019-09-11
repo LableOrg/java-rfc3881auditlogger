@@ -44,7 +44,7 @@ public class LogEntry {
      * delegated to another user (the {@link #requestor}), but responsibility remains with the delegator.
      * <p>
      * This optional field is not part of IETF/RFC 3881; this is an extension defined in the related Dutch standard
-     * NEN 7513:2010 §7.3.6 ID van verantwoordelijke.
+     * NEN 7513:2018 §7.3.6 ID van verantwoordelijke gebruiker.
      */
     Principal delegator;
 
@@ -215,10 +215,10 @@ public class LogEntry {
         StringBuilder out = new StringBuilder();
         boolean first = true;
         for (Object object : objects) {
-            out.append(object.toString());
             if (!first) {
                 out.append("\n-\n");
             }
+            out.append(object.toString());
             first = false;
         }
         return out.toString();

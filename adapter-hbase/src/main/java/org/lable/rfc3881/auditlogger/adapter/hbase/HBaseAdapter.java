@@ -26,6 +26,7 @@ import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
 import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.AuditLogAdapter;
+import org.lable.rfc3881.auditlogger.api.EntryPart;
 import org.lable.rfc3881.auditlogger.api.Event;
 import org.lable.rfc3881.auditlogger.api.LogEntry;
 import org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory;
@@ -46,7 +47,9 @@ import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
  * Persist audit log messages in a HBase table.
  */
 public class HBaseAdapter implements AuditLogAdapter {
+    static final byte[] INCOMPLETE_MARKER = "X-".getBytes();
     static final byte[] NULL_BYTE = new byte[]{0x00};
+
     static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
 
     private final Function<TableName, Table> hbaseConnection;
@@ -95,22 +98,30 @@ public class HBaseAdapter implements AuditLogAdapter {
     }
 
     void addIfNotNull(Put put, String qualifier, Object value) throws JsonProcessingException {
-        addIfNotNull(put, toBytes(qualifier), value);
-    }
-
-    void addIfNotNull(Put put, String qualifier, Collection<? extends Identifiable> collection)
-            throws JsonProcessingException {
-        if (collection == null) return;
-        for (Object value : collection) {
-            addIfNotNull(put, toBytes(qualifier), value);
+        if (value instanceof EntryPart) {
+            addIfNotNull(put, toBytes(qualifier), ((EntryPart) value).isComplete(), value);
+        } else {
+            addIfNotNull(put, toBytes(qualifier), true, value);
         }
     }
 
-    void addIfNotNull(Put put, byte[] qualifier, Object value) throws JsonProcessingException {
+    void addIfNotNull(Put put, String qualifier, Collection<? extends EntryPart> collection)
+            throws JsonProcessingException {
+        if (collection == null) return;
+        for (EntryPart value : collection) {
+            addIfNotNull(put, toBytes(qualifier), value.isComplete(), value);
+        }
+    }
+
+    void addIfNotNull(Put put, byte[] qualifier, boolean complete, Object value) throws JsonProcessingException {
         if (value == null) return;
         if (value instanceof Identifiable) {
+            byte[] suffix = columnQualifierSuffixFor((Identifiable) value);
+
             // Add the identifiers to the column qualifier.
-            qualifier = Bytes.add(qualifier, NULL_BYTE, columnQualifierSuffixFor((Identifiable) value));
+            qualifier = complete
+                    ? ByteMangler.add(qualifier, NULL_BYTE, suffix)
+                    : ByteMangler.add(INCOMPLETE_MARKER, qualifier, NULL_BYTE, suffix);
         }
         put.addColumn(toBytes(columnFamilySetting.get()), qualifier, objectMapper.writeValueAsBytes(value));
     }

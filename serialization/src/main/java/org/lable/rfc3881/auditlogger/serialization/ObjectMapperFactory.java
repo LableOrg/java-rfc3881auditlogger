@@ -18,6 +18,7 @@ package org.lable.rfc3881.auditlogger.serialization;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 /**
  * Creates new instances of {@link ObjectMapper}.
@@ -33,6 +34,10 @@ public class ObjectMapperFactory {
         objectMapper.registerModule(new RFC3881Module(true));
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
         objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+
+        SimpleFilterProvider filterProvider = new SimpleFilterProvider()
+                .addFilter("logFilter", new LogFilter());
+        objectMapper.setFilterProvider(filterProvider);
 
         return objectMapper;
     }
