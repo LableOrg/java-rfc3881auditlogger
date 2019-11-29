@@ -19,6 +19,60 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Read log entries from the audit log.
+ */
 public interface AuditLogReader {
-    List<LogEntry> read(Instant from, Instant to) throws IOException;
+    /**
+     * Read log entries from the audit log.
+     *
+     * @param from Start date. May be {@code null} to stop at the first entry recorded, or if the limit (if set) is
+     *             reached.
+     * @param to End date. May be {@code null} to return entries starting from the present.
+     * @param limit Limit the number of entries returned. May be {@code null} to set no limit.
+     * @return Log entries.
+     */
+    List<LogEntry> read(Instant from, Instant to, Long limit) throws IOException;
+
+    /**
+     * Read log entries from the audit log.
+     *
+     * @param from Start date. May be {@code null} to start at the first entry recorded.
+     * @param to End date. May be {@code null} to return entries until the present.
+     * @return Log entries.
+     */
+    default List<LogEntry> read(Instant from, Instant to) throws IOException {
+        return read(from, to, null);
+    }
+
+    /**
+     * Read log entries from the audit log from the present until a set date.
+     *
+     * @param from Start date.
+     * @return Log entries.
+     */
+    default List<LogEntry> read(Instant from) throws IOException {
+        return read(from, null, null);
+    }
+
+    /**
+     * Read log entries from the audit log from the present until a set date.
+     *
+     * @param from Start date.
+     * @param limit Limit the number of entries returned. May be {@code null} to set no limit.
+     * @return Log entries.
+     */
+    default List<LogEntry> read(Instant from, long limit) throws IOException {
+        return read(from, null, limit);
+    }
+
+    /**
+     * Read log entries from the audit log from the present, stopping when the limit is reached.
+     *
+     * @param limit Limit the number of entries returned. May be {@code null} to set no limit.
+     * @return Log entries.
+     */
+    default List<LogEntry> read(long limit) throws IOException {
+        return read(null, null, limit);
+    }
 }

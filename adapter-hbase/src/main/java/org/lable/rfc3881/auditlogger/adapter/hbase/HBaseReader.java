@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.oss.bitsandbytes.ByteComparison;
@@ -41,6 +42,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
@@ -75,33 +77,46 @@ public class HBaseReader implements AuditLogReader {
     }
 
     /**
-     * Read {@link LogEntry}'s from HBase.
-     *
-     * @param from Instant in time to start reading from.
-     * @param to   Instant in time to stop reading after.
-     * @return A list of {@link LogEntry}, in reverse chronological order (newest first).
+     * {@inheritDoc}
      */
     @Override
-    public List<LogEntry> read(Instant from, Instant to) throws IOException {
-        if (from == null) throw new IllegalArgumentException("Parameter `from` is required.");
-        if (to == null) throw new IllegalArgumentException("Parameter `to` is required.");
-
+    public List<LogEntry> read(Instant from, Instant to, Long limit) throws IOException {
         byte[] cf = columnFamilySetting.get().getBytes(StandardCharsets.UTF_8);
-        byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
-        byte[] stop = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli())));
 
-        Scan scan = new Scan(start, stop);
+        Scan scan = new Scan();
         scan.addFamily(cf);
+
+        if (from != null) {
+            byte[] stop = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli())));
+            scan.setStopRow(stop);
+        }
+
+        if (to != null) {
+            byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
+            scan.setStartRow(start);
+        }
+
+        if (limit != null && limit > 0) {
+            PageFilter pageFilter = new PageFilter(limit);
+            scan.setFilter(pageFilter);
+        }
 
         try (
                 Table table = hbaseConnection.apply(tableNameSetting.get());
                 ResultScanner scanner = table.getScanner(scan)
         ) {
-            return StreamSupport.stream(scanner.spliterator(), false)
+            Stream<LogEntry> stream = StreamSupport.stream(scanner.spliterator(), false)
                     .map(result -> parseEntry(result, cf))
                     .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
+                    .map(Optional::get);
+
+            if (limit != null && limit > 0) {
+                // Always apply the limit on returned results too, because the PageFilter doesn't guarantee
+                // that no more than `limit` results will be returned.
+                stream = stream.limit(limit);
+            }
+
+            return stream.collect(Collectors.toList());
         }
     }
 

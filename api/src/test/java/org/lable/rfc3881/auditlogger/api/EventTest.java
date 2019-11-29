@@ -35,12 +35,31 @@ public class EventTest {
         Event event = new Event(
                 new CodeReference("CS", "01", "test"),
                 EventAction.CREATE,
+                Instant.parse("2019-12-01T14:00:00.001Z").toEpochMilli(),
+                EventOutcome.SUCCESS);
+
+        String expected =
+                "ID:          CS: 01 (test)\n" +
+                "Action:      Create\n" +
+                "At:          2019-12-01T14:00:00.001Z (01-Dec-2019 15:00:00, CET)\n" +
+                "Outcome:     Success\n" +
+                "Type:        []";
+
+        assertThat(event.toString(), is(expected));
+    }
+
+    @Test
+    public void toStringTestDaylightSavingsTime() {
+        Event event = new Event(
+                new CodeReference("CS", "01", "test"),
+                EventAction.CREATE,
                 Instant.parse("2015-09-01T14:00:00.001Z").toEpochMilli(),
                 EventOutcome.SUCCESS);
 
-        String expected = "ID:          CS: 01 (test)\n" +
+        String expected =
+                "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.001Z\n" +
+                "At:          2015-09-01T14:00:00.001Z (01-Sep-2015 16:00:00, CEST)\n" +
                 "Outcome:     Success\n" +
                 "Type:        []";
 
@@ -57,9 +76,10 @@ public class EventTest {
                 new CodeReference("A", "1", "xx"),
                 new CodeReference("B", "2", "yy"));
 
-        String expected = "ID:          CS: 01 (test)\n" +
+        String expected =
+                "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.001Z\n" +
+                "At:          2015-09-01T14:00:00.001Z (01-Sep-2015 16:00:00, CEST)\n" +
                 "Outcome:     Success\n" +
                 "Type:        [A: 1 (xx), B: 2 (yy)]";
 

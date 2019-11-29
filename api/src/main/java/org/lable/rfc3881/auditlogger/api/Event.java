@@ -28,11 +28,10 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEve
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.time.format.FormatStyle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -257,11 +256,18 @@ public class Event implements Serializable {
 
     @Override
     public String toString() {
+        TimeZone timeZone = TimeZone.getTimeZone(ZoneId.systemDefault());
+        Instant at = Instant.ofEpochMilli(happenedAt);
+        boolean dst = ZoneId.systemDefault().getRules().isDaylightSavings(at);
+
         return "ID:          " + getId() +
                 "\nAction:      " + EventAction.fromReferenceable(getAction())
                         .map(EventAction::getDisplayName)
                         .orElse(getAction().getCode()) +
-                "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(happenedAt)) +
+                "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(at) +
+                " (" + DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                .withZone(ZoneId.systemDefault())
+                .format(at) + ", " + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")" +
                 "\nOutcome:     " + EventOutcome.fromReferenceable(getOutcome())
                         .map(EventOutcome::getDisplayName)
                         .orElse(getOutcome().getCode()) +

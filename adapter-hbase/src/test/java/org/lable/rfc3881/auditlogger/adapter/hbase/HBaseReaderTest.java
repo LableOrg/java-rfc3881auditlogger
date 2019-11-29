@@ -18,22 +18,27 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.AuditLogAdapter;
 import org.lable.rfc3881.auditlogger.api.AuditLogReader;
 import org.lable.rfc3881.auditlogger.api.LogEntry;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
+import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
 
 public class HBaseReaderTest {
 
@@ -52,11 +57,11 @@ public class HBaseReaderTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("jeroen", "audit_test2"),
+                    () -> TableName.valueOf("jeroen", "audit_test"),
                     () -> "a"
             );
 
-            List<LogEntry> logs = logReader.read(Instant.now().minus(1, ChronoUnit.HOURS), Instant.now());
+            List<LogEntry> logs = logReader.read(1);
 
             for (LogEntry log : logs) {
                 System.out.println(log);
