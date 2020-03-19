@@ -18,33 +18,29 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.lable.oss.bitsandbytes.ByteMangler;
-import org.lable.rfc3881.auditlogger.api.AuditLogAdapter;
 import org.lable.rfc3881.auditlogger.api.AuditLogReader;
 import org.lable.rfc3881.auditlogger.api.LogEntry;
+import org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
-import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
+import static org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions.TRUNCATE_PARTICIPANT_OBJECTS;
 
 public class HBaseReaderTest {
 
     @Test
     @Ignore
-    public void readOne() throws IOException {
+    public void readSome() throws IOException {
         Configuration conf = HBaseConfiguration.create();
         conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
         try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
@@ -57,14 +53,48 @@ public class HBaseReaderTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("jeroen", "audit_test"),
+                    () -> TableName.valueOf("audit", "care_master_stable"),
                     () -> "a"
             );
 
-            List<LogEntry> logs = logReader.read(1);
+            List<LogEntry> logs;
+            EnumSet<ToStringOptions> options;
+
+            Instant now = Instant.now();
+
+            // Een uur geleden.
+            Instant then = now.minus(1, ChronoUnit.HOURS);
+
+            // Specifiek tijdstip.
+            Instant at = LocalDateTime.parse("2020-03-11T10:37:46")
+                    .atZone(ZoneId.of("Europe/Amsterdam"))
+                    .toInstant();
+
+
+            // Logs ophalen:
+            logs =
+
+                    // Laatste n logs.
+                    logReader.read(5);
+
+                    // Toon n logs vanaf een tijdstip.
+//                    logReader.read(at, 2);
+//                    logReader.read(then, 1);
+
+
+            // Weergave-instellingen:
+            options =
+
+                    // Laat de betrokken objecten beknopt zien.
+                    EnumSet.of(TRUNCATE_PARTICIPANT_OBJECTS);
+
+                    // Laat alles zien.
+//                    EnumSet.noneOf(ToStringOptions.class);
+
+
 
             for (LogEntry log : logs) {
-                System.out.println(log);
+                System.out.println(log.toString(options));
             }
         }
     }

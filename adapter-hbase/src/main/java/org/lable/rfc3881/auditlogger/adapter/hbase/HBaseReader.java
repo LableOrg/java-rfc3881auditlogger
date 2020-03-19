@@ -87,11 +87,18 @@ public class HBaseReader implements AuditLogReader {
         scan.addFamily(cf);
 
         if (from != null) {
-            byte[] stop = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli())));
-            scan.setStopRow(stop);
-        }
-
-        if (to != null) {
+            if (to == null) {
+                // Reverse scan.
+                scan.setReversed(true);
+                byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli() - 1)));
+                scan.setStartRow(start);
+            } else {
+                byte[] stop = ByteMangler.plusOne(ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli()))));
+                scan.setStopRow(stop);
+                byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
+                scan.setStartRow(start);
+            }
+        } else if (to != null) {
             byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
             scan.setStartRow(start);
         }

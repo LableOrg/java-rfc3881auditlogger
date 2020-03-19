@@ -18,6 +18,7 @@ package org.lable.rfc3881.auditlogger.api;
 import org.lable.codesystem.codereference.Referenceable;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -185,8 +186,11 @@ public class LogEntry {
         );
     }
 
-    @Override
-    public String toString() {
+    public String toString(EnumSet<ToStringOptions> options) {
+        String participantObjects = options.contains(ToStringOptions.TRUNCATE_PARTICIPANT_OBJECTS)
+                ? "(" + getParticipantObjects().size() + ")"
+                : join(getParticipantObjects());
+
         return "AUDIT EVENT\n" +
                 "--------------------------------------------\n" +
                 "[[   event   ]]:\n" +
@@ -201,10 +205,15 @@ public class LogEntry {
                 "[[   audit sources   ]]:\n" +
                 join(getAuditSources()) + "\n" +
                 "[[   participant objects   ]]:\n" +
-                join(getParticipantObjects()) + "\n" +
+                participantObjects + "\n" +
                 "[[   version   ]]:\n" +
                 (getVersion() == null ? "unknown" : getVersion()) + "\n" +
                 "--------------------------------------------";
+    }
+
+    @Override
+    public String toString() {
+        return toString(EnumSet.noneOf(ToStringOptions.class));
     }
 
     static String join(List<?> objects) {
@@ -222,5 +231,9 @@ public class LogEntry {
             first = false;
         }
         return out.toString();
+    }
+
+    public enum ToStringOptions {
+        TRUNCATE_PARTICIPANT_OBJECTS
     }
 }
