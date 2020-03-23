@@ -265,7 +265,7 @@ public class Event implements Serializable {
                         .map(EventAction::getDisplayName)
                         .orElse(getAction().getCode()) +
                 "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(at) +
-                " (" + DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                " (" + DateTimeFormatter.ofPattern("d MMM YYYY, HH:mm:ss")
                 .withZone(ZoneId.systemDefault())
                 .format(at) + ", " + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")" +
                 "\nOutcome:     " + EventOutcome.fromReferenceable(getOutcome())

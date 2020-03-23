@@ -41,7 +41,7 @@ public class EventTest {
         String expected =
                 "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2019-12-01T14:00:00.001Z (01-Dec-2019 15:00:00, CET)\n" +
+                "At:          2019-12-01T14:00:00.001Z (1 Dec 2019, 15:00:00, CET)\n" +
                 "Outcome:     Success\n" +
                 "Type:        []";
 
@@ -59,7 +59,7 @@ public class EventTest {
         String expected =
                 "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.001Z (01-Sep-2015 16:00:00, CEST)\n" +
+                "At:          2015-09-01T14:00:00.001Z (1 Sep 2015, 16:00:00, CEST)\n" +
                 "Outcome:     Success\n" +
                 "Type:        []";
 
@@ -79,7 +79,7 @@ public class EventTest {
         String expected =
                 "ID:          CS: 01 (test)\n" +
                 "Action:      Create\n" +
-                "At:          2015-09-01T14:00:00.001Z (01-Sep-2015 16:00:00, CEST)\n" +
+                "At:          2015-09-01T14:00:00.001Z (1 Sep 2015, 16:00:00, CEST)\n" +
                 "Outcome:     Success\n" +
                 "Type:        [A: 1 (xx), B: 2 (yy)]";
 
