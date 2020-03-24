@@ -21,9 +21,10 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lable.codesystem.codereference.CodeReference;
+import org.lable.codesystem.codereference.Referenceable;
 import org.lable.oss.bitsandbytes.ByteComparison;
 import org.lable.oss.bitsandbytes.ByteConversion;
 import org.lable.oss.bitsandbytes.ByteMangler;
@@ -41,6 +42,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -80,11 +82,55 @@ public class HBaseReader implements AuditLogReader {
      * {@inheritDoc}
      */
     @Override
-    public List<LogEntry> read(Instant from, Instant to, Long limit) throws IOException {
+    public List<LogEntry> read(Instant from, Instant to, Long limit, LogFilter filter) throws IOException {
+        if (filter == null) filter = LogFilter.empty();
         byte[] cf = columnFamilySetting.get().getBytes(StandardCharsets.UTF_8);
 
         Scan scan = new Scan();
         scan.addFamily(cf);
+
+        FilterList filters = new FilterList();
+
+        Referenceable eventId = filter.getEventId();
+        if (eventId != null) {
+            // Filter on event ID.
+            CodeReference cr = eventId.toCodeReference();
+            String codeSystem = Pattern.quote(cr.getCodeSystem());
+            String code = Pattern.quote(cr.getCode());
+            filters.addFilter(new RowFilter(
+                    CompareFilter.CompareOp.EQUAL,
+                    new RegexStringComparator(codeSystem + "\0" + code + "$")
+            ));
+        }
+
+        String principal = filter.getPrincipal();
+        if (principal != null) {
+            System.out.println(principal);
+            // Filter on principal involved.
+            filters.addFilter(new FilterList(
+                    FilterList.Operator.MUST_PASS_ONE,
+                    mustInclude(cf, "requestor", principal),
+                    mustInclude(cf, "delegator", principal),
+                    mustInclude(cf, "principal", principal)
+            ));
+        }
+
+        List<LogFilter.ObjectId> objectIds = filter.getParticipantObjectIds();
+        if (!objectIds.isEmpty()) {
+            FilterList objectFilterList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+
+            for (LogFilter.ObjectId objectId : objectIds) {
+                objectFilterList.addFilter(
+                        mustIncludeParticipantObject(cf, "object", objectId.getTypeId(), objectId.getId())
+                );
+                objectFilterList.addFilter(
+                        mustIncludeParticipantObject(cf, "X-object", objectId.getTypeId(), objectId.getId())
+                );
+            }
+
+            filters.addFilter(objectFilterList);
+
+        }
 
         if (from != null) {
             if (to == null) {
@@ -105,7 +151,11 @@ public class HBaseReader implements AuditLogReader {
 
         if (limit != null && limit > 0) {
             PageFilter pageFilter = new PageFilter(limit);
-            scan.setFilter(pageFilter);
+            filters.addFilter(pageFilter);
+        }
+
+        if (!filters.getFilters().isEmpty()) {
+            scan.setFilter(filters);
         }
 
         try (
@@ -220,5 +270,39 @@ public class HBaseReader implements AuditLogReader {
         }
 
         return null;
+    }
+
+    Filter mustInclude(byte[] cf, String prefix, String suffix) {
+        byte[] cq = ByteMangler.add(
+                Bytes.toBytes(prefix),
+                new byte[]{0},
+                Bytes.toBytes(suffix)
+        );
+        return mustInclude(cf, cq);
+    }
+
+    Filter mustIncludeParticipantObject(byte[] cf, String prefix, Referenceable typeId, String id) {
+        CodeReference cr = typeId.toCodeReference();
+        byte[] cq = ByteMangler.add(
+                Bytes.toBytes(prefix),
+                new byte[]{0},
+                Bytes.toBytes(cr.getCodeSystem()),
+                new byte[]{0},
+                Bytes.toBytes(cr.getCode()),
+                new byte[]{0},
+                Bytes.toBytes(id)
+        );
+        return mustInclude(cf, cq);
+    }
+
+    Filter mustInclude(byte[] cf, byte[] cq) {
+        SingleColumnValueFilter filter = new SingleColumnValueFilter(
+                cf,
+                cq,
+                CompareFilter.CompareOp.NOT_EQUAL,
+                new BinaryComparator(new byte[0])
+        );
+        filter.setFilterIfMissing(true);
+        return filter;
     }
 }

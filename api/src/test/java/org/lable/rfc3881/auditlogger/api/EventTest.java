@@ -94,6 +94,22 @@ public class EventTest {
         assertThat(event.getTypes().get(0), is((Referenceable) new CodeReference("cat", "ZZZ")));
     }
 
+    @Test
+    public void sortingTest() {
+        Event eventA = new Event(
+                new CodeReference("CS", "01", "test"),
+                EventAction.CREATE,
+                Instant.parse("2019-12-01T14:00:00.001Z").toEpochMilli(),
+                EventOutcome.SUCCESS);
+        Event eventB = new Event(
+                new CodeReference("CS", "01", "test"),
+                EventAction.CREATE,
+                Instant.parse("2019-12-01T13:00:00.001Z").toEpochMilli(),
+                EventOutcome.SUCCESS);
+
+        assertThat(eventA.compareTo(eventB), is(1));
+    }
+
     public static class CategorizableTest implements Categorizable {
         @Override
         public List<Referenceable> categorizedUnder() {

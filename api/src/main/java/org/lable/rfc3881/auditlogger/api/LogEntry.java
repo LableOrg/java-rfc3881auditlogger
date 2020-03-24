@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * Log entry for an audit event.
  */
-public class LogEntry {
+public class LogEntry implements Comparable<LogEntry> {
     /**
      * Identifies the name, action types, time, and disposition of the audited event.
      * <p>
@@ -184,6 +184,14 @@ public class LogEntry {
                 event, requestor, delegator, participatingPrincipals, networkAccessPoint,
                 auditSources, participantObjects, version
         );
+    }
+
+    @Override
+    public int compareTo(LogEntry other) {
+        if (other == null) return -1;
+        if (this == other) return 0;
+
+        return this.getEvent().compareTo(other.getEvent());
     }
 
     public String toString(EnumSet<ToStringOptions> options) {

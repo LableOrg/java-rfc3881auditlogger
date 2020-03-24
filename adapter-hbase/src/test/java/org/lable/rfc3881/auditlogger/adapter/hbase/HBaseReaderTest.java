@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.lable.rfc3881.auditlogger.api.AuditLogReader;
 import org.lable.rfc3881.auditlogger.api.LogEntry;
 import org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions;
+import org.lable.rfc3881.auditlogger.api.LogFilter;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -33,8 +34,6 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
-
-import static org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions.TRUNCATE_PARTICIPANT_OBJECTS;
 
 public class HBaseReaderTest {
 
@@ -70,15 +69,26 @@ public class HBaseReaderTest {
                     .atZone(ZoneId.of("Europe/Amsterdam"))
                     .toInstant();
 
+            at = Instant.parse("2020-03-24T09:57:34.470Z");
+
+            LogFilter filter =
+
+                    LogFilter.define()
+//                            .filterOnEventId("lable/auditevents/resource", "/api/v1/clients")
+//                            .filterOnPrincipalInvolved("domain-master-stable-local//8-mftqfmwtxmqxxxxz")
+//                            .addFilterOnParticipantObject("lable/data-owner/1.0", "client", "8-szmrxptfzmqxxxxz")
+//                            .addFilterOnParticipantObject("lable/data-owner/1.0", "Client", "8-szmrxptfzmqxxxxz")
+                            .addFilterOnParticipantObject("lable/data-owner/1.0", "Client", "Client_0_abddcf9f50f34aa08b9f25ddde046d0e")
+                            .build();
 
             // Logs ophalen:
             logs =
 
                     // Laatste n logs.
-                    logReader.read(5);
+                    logReader.read(10, filter);
 
                     // Toon n logs vanaf een tijdstip.
-//                    logReader.read(at, 2);
+//                    logReader.read(at, null, 2L, filter);
 //                    logReader.read(then, 1);
 
 
@@ -86,10 +96,10 @@ public class HBaseReaderTest {
             options =
 
                     // Laat de betrokken objecten beknopt zien.
-                    EnumSet.of(TRUNCATE_PARTICIPANT_OBJECTS);
+//                    EnumSet.of(TRUNCATE_PARTICIPANT_OBJECTS);
 
                     // Laat alles zien.
-//                    EnumSet.noneOf(ToStringOptions.class);
+                    EnumSet.noneOf(ToStringOptions.class);
 
 
 

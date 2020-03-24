@@ -28,6 +28,7 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEve
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  * <p>
  * Defined in IETF/RFC 3881 §5.1. Event Identification.
  */
-public class Event implements Serializable {
+public class Event implements Serializable, Comparable<Event> {
     private static final long serialVersionUID = 3890563908827120988L;
 
     /* Required fields. */
@@ -252,6 +253,14 @@ public class Event implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id, happenedAt, eventOutcome, eventAction, types);
+    }
+
+    @Override
+    public int compareTo(Event other) {
+        if (other == null) return -1;
+        if (this == other) return 0;
+
+        return Long.compare(this.getHappenedAt(), other.getHappenedAt());
     }
 
     @Override

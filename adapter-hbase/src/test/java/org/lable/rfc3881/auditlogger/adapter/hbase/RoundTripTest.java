@@ -166,7 +166,7 @@ public class RoundTripTest {
         logAdapter.record(entryNullish);
         logAdapter.record(entryFullish);
 
-        List<LogEntry> entries = logReader.read(at.minus(1, ChronoUnit.MINUTES), at.plus(1, ChronoUnit.MINUTES));
+        List<LogEntry> entries = logReader.read(2);
 
         assertThat(entries.size(), is(2));
 
