@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2015 Lable (info@lable.nl)
+ * Copyright © 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -98,7 +99,7 @@ public class HBaseReader implements AuditLogReader {
             String codeSystem = Pattern.quote(cr.getCodeSystem());
             String code = Pattern.quote(cr.getCode());
             filters.addFilter(new RowFilter(
-                    CompareFilter.CompareOp.EQUAL,
+                    CompareOperator.EQUAL,
                     new RegexStringComparator(codeSystem + "\0" + code + "$")
             ));
         }
@@ -137,16 +138,16 @@ public class HBaseReader implements AuditLogReader {
                 // Reverse scan.
                 scan.setReversed(true);
                 byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli() - 1)));
-                scan.setStartRow(start);
+                scan.withStartRow(start);
             } else {
                 byte[] stop = ByteMangler.plusOne(ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli()))));
-                scan.setStopRow(stop);
+                scan.withStopRow(stop);
                 byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
-                scan.setStartRow(start);
+                scan.withStartRow(start);
             }
         } else if (to != null) {
             byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
-            scan.setStartRow(start);
+            scan.withStartRow(start);
         }
 
         if (limit != null && limit > 0) {
@@ -299,7 +300,7 @@ public class HBaseReader implements AuditLogReader {
         SingleColumnValueFilter filter = new SingleColumnValueFilter(
                 cf,
                 cq,
-                CompareFilter.CompareOp.NOT_EQUAL,
+                CompareOperator.NOT_EQUAL,
                 new BinaryComparator(new byte[0])
         );
         filter.setFilterIfMissing(true);

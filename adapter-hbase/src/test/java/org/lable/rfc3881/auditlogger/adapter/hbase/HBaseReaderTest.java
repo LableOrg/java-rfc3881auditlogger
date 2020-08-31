@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2015 Lable (info@lable.nl)
+ * Copyright © 2015 Lable (info@lable.nl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -78,7 +78,7 @@ public class HBaseReaderTest {
 //                            .filterOnPrincipalInvolved("domain-master-stable-local//8-mftqfmwtxmqxxxxz")
 //                            .addFilterOnParticipantObject("lable/data-owner/1.0", "client", "8-szmrxptfzmqxxxxz")
 //                            .addFilterOnParticipantObject("lable/data-owner/1.0", "Client", "8-szmrxptfzmqxxxxz")
-                            .addFilterOnParticipantObject("lable/data-owner/1.0", "Client", "Client_0_abddcf9f50f34aa08b9f25ddde046d0e")
+//                            .addFilterOnParticipantObject("lable/data-owner/1.0", "Client", "Client_0_abddcf9f50f34aa08b9f25ddde046d0e")
                             .build();
 
             // Logs ophalen:
