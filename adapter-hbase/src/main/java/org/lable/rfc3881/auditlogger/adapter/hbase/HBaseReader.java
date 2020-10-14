@@ -57,7 +57,7 @@ import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.INCOMPLET
 public class HBaseReader implements AuditLogReader {
     private static final Logger logger = LoggerFactory.getLogger(HBaseReader.class);
 
-    static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
+    static ObjectMapper objectMapper;
 
     private final Function<TableName, Table> hbaseConnection;
     private final Supplier<TableName> tableNameSetting;
@@ -159,12 +159,14 @@ public class HBaseReader implements AuditLogReader {
             scan.setFilter(filters);
         }
 
+        if (objectMapper == null) objectMapper = ObjectMapperFactory.getObjectMapper();
+
         try (
                 Table table = hbaseConnection.apply(tableNameSetting.get());
                 ResultScanner scanner = table.getScanner(scan)
         ) {
             Stream<LogEntry> stream = StreamSupport.stream(scanner.spliterator(), false)
-                    .map(result -> parseEntry(result, cf))
+                    .map(result -> parseEntry(objectMapper, result, cf))
                     .filter(Optional::isPresent)
                     .map(Optional::get);
 
@@ -178,25 +180,30 @@ public class HBaseReader implements AuditLogReader {
         }
     }
 
-    Optional<LogEntry> parseEntry(Result result, byte[] cf) {
+    public static Optional<LogEntry> parseEntry(ObjectMapper objectMapper, Result result, byte[] cf) {
         if (result == null || result.isEmpty()) return Optional.empty();
 
         byte[] row = result.getRow();
         NavigableMap<byte[], byte[]> familyValues = result.getFamilyMap(cf);
 
-        Event event = readObjectFromResult(Event.class, familyValues, row, "event");
+        Event event = readObjectFromResult(objectMapper, Event.class, familyValues, row, "event");
         if (event == null) return Optional.empty();
 
-        Principal requestor = readObjectFromResult(Principal.class, familyValues, row, "requestor");
-        Principal delegator = readObjectFromResult(Principal.class, familyValues, row, "delegator");
+        Principal requestor = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "requestor");
+        Principal delegator = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "delegator");
         NetworkAccessPoint accessPoint =
-                readObjectFromResult(NetworkAccessPoint.class, familyValues, row, "access_point");
+                readObjectFromResult(objectMapper, NetworkAccessPoint.class, familyValues, row, "access_point");
 
-        List<Principal> principals = readObjectsFromResult(Principal.class, familyValues, row, "principal");
-        List<AuditSource> auditSources = readObjectsFromResult(AuditSource.class, familyValues, row, "source");
-        List<ParticipantObject> participantObjects =
-                readObjectsFromResult(ParticipantObject.class, familyValues, row, "object");
-        CodeReference version = readObjectFromResult(CodeReference.class, familyValues, row, "version");
+        List<Principal> principals = readObjectsFromResult(
+                objectMapper, Principal.class, familyValues, row, "principal"
+        );
+        List<AuditSource> auditSources = readObjectsFromResult(
+                objectMapper, AuditSource.class, familyValues, row, "source"
+        );
+        List<ParticipantObject> participantObjects = readObjectsFromResult(
+                objectMapper, ParticipantObject.class, familyValues, row, "object"
+        );
+        CodeReference version = readObjectFromResult(objectMapper, CodeReference.class, familyValues, row, "version");
 
         return Optional.of(new LogEntry(
                 event,
@@ -210,10 +217,11 @@ public class HBaseReader implements AuditLogReader {
         ));
     }
 
-    <T> List<T> readObjectsFromResult(Class<T> objectType,
-                                      NavigableMap<byte[], byte[]> columns,
-                                      byte[] row,
-                                      String columnPrefix) {
+    static <T> List<T> readObjectsFromResult(ObjectMapper objectMapper,
+                                             Class<T> objectType,
+                                             NavigableMap<byte[], byte[]> columns,
+                                             byte[] row,
+                                             String columnPrefix) {
         List<T> list = new ArrayList<>();
 
         byte[] prefixBytes = ByteConversion.fromString(columnPrefix);
@@ -243,10 +251,11 @@ public class HBaseReader implements AuditLogReader {
         return list;
     }
 
-    <T> T readObjectFromResult(Class<T> objectType,
-                               NavigableMap<byte[], byte[]> columns,
-                               byte[] row,
-                               String columnPrefix) {
+    static <T> T readObjectFromResult(ObjectMapper objectMapper,
+                                      Class<T> objectType,
+                                      NavigableMap<byte[], byte[]> columns,
+                                      byte[] row,
+                                      String columnPrefix) {
 
         byte[] prefixBytes = ByteConversion.fromString(columnPrefix);
         byte[] incompletePrefixBytes = ByteMangler.add(INCOMPLETE_MARKER, prefixBytes);

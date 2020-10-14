@@ -50,7 +50,7 @@ public class HBaseAdapter implements AuditLogAdapter {
     static final byte[] INCOMPLETE_MARKER = "X-".getBytes();
     static final byte[] NULL_BYTE = new byte[]{0x00};
 
-    static final ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
+    static ObjectMapper objectMapper;
 
     private final Function<TableName, Table> hbaseConnection;
     private final Supplier<TableName> tableNameSetting;
@@ -74,6 +74,17 @@ public class HBaseAdapter implements AuditLogAdapter {
         this.tableNameSetting = tableNameSetting;
         this.columnFamilySetting = columnFamilySetting;
         this.uniqueIDGenerator = uniqueIDGenerator;
+    }
+
+    /**
+     * Override the default {@link ObjectMapper}. This is only needed in rare cases where the default
+     * {@link ObjectMapper} created by this library clashes with the data-bind library on the classpath, or if you want
+     * some radically different serialization.
+     *
+     * @param objectMapper Custom object-mapper.
+     */
+    public static void setObjectMapper(ObjectMapper objectMapper) {
+        HBaseAdapter.objectMapper = objectMapper;
     }
 
     /**
@@ -123,6 +134,8 @@ public class HBaseAdapter implements AuditLogAdapter {
                     ? ByteMangler.add(qualifier, NULL_BYTE, suffix)
                     : ByteMangler.add(INCOMPLETE_MARKER, qualifier, NULL_BYTE, suffix);
         }
+
+        if (objectMapper == null) objectMapper = ObjectMapperFactory.getObjectMapper();
         put.addColumn(toBytes(columnFamilySetting.get()), qualifier, objectMapper.writeValueAsBytes(value));
     }
 

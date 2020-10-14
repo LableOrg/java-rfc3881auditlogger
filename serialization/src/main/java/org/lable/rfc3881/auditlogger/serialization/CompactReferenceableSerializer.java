@@ -31,30 +31,11 @@ public class CompactReferenceableSerializer extends JsonSerializer<Referenceable
         // using the name of an enum implementing Referenceable.
         if (value instanceof CodeReference) {
             generator.writeStartObject();
-            writeField(generator, provider, "cs", ((CodeReference) value).getCodeSystem());
-            writeField(generator, provider, "code", ((CodeReference) value).getCode());
+            generator.writeStringField("cs", ((CodeReference) value).getCodeSystem());
+            generator.writeStringField("code", ((CodeReference) value).getCode());
             generator.writeEndObject();
         } else {
             provider.defaultSerializeValue(value.toCodeReference(), generator);
         }
-    }
-
-    void writeField(JsonGenerator generator, SerializerProvider provider, String name, String value)
-            throws IOException {
-        switch (provider.getConfig().getDefaultPropertyInclusion().getValueInclusion()) {
-            case NON_NULL:
-            case NON_ABSENT:
-                if (value == null) return;
-                break;
-            case NON_EMPTY:
-                if (value == null || value.isEmpty()) return;
-                break;
-            default:
-            case ALWAYS:
-                // Allow.
-                break;
-        }
-
-        generator.writeStringField(name, value);
     }
 }
