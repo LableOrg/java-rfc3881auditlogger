@@ -37,14 +37,19 @@ public class CodeReferenceDeserializer extends JsonDeserializer<CodeReference> {
         if (!node.has("cs") || !node.has("code")) {
             return null;
         }
-        String codeSystem = node.get("cs").asText(null);
-        String code = node.get("code").asText(null);
+
+        String codeSystem = node.get("cs").asText();
+        String code = node.get("code").asText();
 
         // Optional fields, can be null.
-        String codeSystemName = node.has("csn") ? node.get("csn").asText(null) : null;
-        String originalText = node.has("ot") ? node.get("ot").asText(null) : null;
-        String displayName = node.has("dn") ? node.get("dn").asText(null) : null;
+        String codeSystemName = node.has("csn") ? asTextNull(node.get("csn")) : null;
+        String originalText = node.has("ot") ? asTextNull(node.get("ot")) : null;
+        String displayName = node.has("dn") ? asTextNull(node.get("dn")) : null;
 
         return new CodeReference(codeSystem, codeSystemName, code, displayName, originalText);
+    }
+
+    static String asTextNull(JsonNode node) {
+        return node.isNull() ? null : node.asText();
     }
 }
