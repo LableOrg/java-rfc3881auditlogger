@@ -17,7 +17,6 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -37,7 +36,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
@@ -52,26 +51,22 @@ public class HBaseAdapter implements AuditLogAdapter {
 
     static ObjectMapper objectMapper;
 
-    private final Function<TableName, Table> hbaseConnection;
-    private final Supplier<TableName> tableNameSetting;
+    private final Consumer<Put> putConsumer;
     private final Supplier<String> columnFamilySetting;
     private final Supplier<byte[]> uniqueIDGenerator;
 
     /**
      * Create a new {@link HBaseAdapter}.
      *
-     * @param hbaseConnection     A function that returns a HBase {@link Table}.
-     * @param tableNameSetting    A supplier that returns the table logs should be persisted to.
+     * @param putConsumer         A consumer that will handle persisting the generated {@link Put}.
      * @param columnFamilySetting A supplier that returns the column family that should be used for the logs.
      * @param uniqueIDGenerator   A supplier that returns a unique identifier on each call.
      */
     @Inject
-    public HBaseAdapter(@Named("hbase-connection") Function<TableName, Table> hbaseConnection,
-                        @Named("audit-table") Supplier<TableName> tableNameSetting,
+    public HBaseAdapter(@Named("hbase-put-consumer") Consumer<Put> putConsumer,
                         @Named("audit-column-family") Supplier<String> columnFamilySetting,
                         @Named("uid-generator") Supplier<byte[]> uniqueIDGenerator) {
-        this.hbaseConnection = hbaseConnection;
-        this.tableNameSetting = tableNameSetting;
+        this.putConsumer = putConsumer;
         this.columnFamilySetting = columnFamilySetting;
         this.uniqueIDGenerator = uniqueIDGenerator;
     }
@@ -94,18 +89,16 @@ public class HBaseAdapter implements AuditLogAdapter {
     public void record(LogEntry logEntry) throws IOException {
         if (logEntry == null) return;
 
-        try (Table auditTable = hbaseConnection.apply(tableNameSetting.get())) {
-            Put put = new Put(rowKeyFor(logEntry, uniqueIDGenerator.get()));
-            addIfNotNull(put, "event", logEntry.getEvent());
-            addIfNotNull(put, "requestor", logEntry.getRequestor());
-            addIfNotNull(put, "delegator", logEntry.getDelegator());
-            addIfNotNull(put, "access_point", logEntry.getNetworkAccessPoint());
-            addIfNotNull(put, "principal", logEntry.getParticipatingPrincipals());
-            addIfNotNull(put, "source", logEntry.getAuditSources());
-            addIfNotNull(put, "object", logEntry.getParticipantObjects());
-            addIfNotNull(put, "version", logEntry.getVersion());
-            auditTable.put(put);
-        }
+        Put put = new Put(rowKeyFor(logEntry, uniqueIDGenerator.get()));
+        addIfNotNull(put, "event", logEntry.getEvent());
+        addIfNotNull(put, "requestor", logEntry.getRequestor());
+        addIfNotNull(put, "delegator", logEntry.getDelegator());
+        addIfNotNull(put, "access_point", logEntry.getNetworkAccessPoint());
+        addIfNotNull(put, "principal", logEntry.getParticipatingPrincipals());
+        addIfNotNull(put, "source", logEntry.getAuditSources());
+        addIfNotNull(put, "object", logEntry.getParticipantObjects());
+        addIfNotNull(put, "version", logEntry.getVersion());
+        putConsumer.accept(put);
     }
 
     void addIfNotNull(Put put, String qualifier, Object value) throws JsonProcessingException {

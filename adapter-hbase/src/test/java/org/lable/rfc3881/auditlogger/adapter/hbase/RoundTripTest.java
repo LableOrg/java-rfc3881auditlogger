@@ -16,6 +16,7 @@
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
@@ -48,10 +49,16 @@ public class RoundTripTest {
         hbase = new LocalHbase();
         hbase.createNamespace("ns");
         hbase.getHBaseTestingUtility().createTable(AUDIT_TABLE, "a");
+        Table table = hbase.getTable(AUDIT_TABLE);
 
         logAdapter = new HBaseAdapter(
-                hbase::getTable,
-                () -> AUDIT_TABLE,
+                put -> {
+                    try {
+                        table.put(put);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
                 () -> "a",
                 () -> Bytes.toBytes(uid.getAndIncrement())
         );
