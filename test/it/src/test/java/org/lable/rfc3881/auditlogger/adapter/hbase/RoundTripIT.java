@@ -15,8 +15,14 @@
  */
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.shaded.org.apache.commons.configuration.BaseConfiguration;
+import org.apache.hadoop.hbase.shaded.org.apache.commons.configuration.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
@@ -24,6 +30,7 @@ import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
+import org.lable.rfc3881.auditlogger.test.HbaseTestHelper;
 
 import java.io.IOException;
 import java.time.*;
@@ -35,21 +42,34 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 
-public class RoundTripTest {
-    private LocalHbase hbase;
+public class RoundTripIT {
     private AuditLogAdapter logAdapter;
     private AuditLogReader logReader;
+    private Connection connection;
+    private Admin admin;
 
     TableName AUDIT_TABLE = TableName.valueOf("ns", "audit");
 
     @Before
     public void before() throws Exception {
+        Configuration configuration = new BaseConfiguration();
+        configuration.setProperty("hbase.zookeeper.znode", "/hbase");
+
+
+        org.apache.hadoop.conf.Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "localhost:33533");
+        conf.set("zookeeper.znode.parent", "/hbase");
+
+
+        connection = ConnectionFactory.createConnection(conf);
+        admin = connection.getAdmin();
+
         AtomicLong uid = new AtomicLong();
 
-        hbase = new LocalHbase();
-        hbase.createNamespace("ns");
-        hbase.getHBaseTestingUtility().createTable(AUDIT_TABLE, "a");
-        Table table = hbase.getTable(AUDIT_TABLE);
+        HbaseTestHelper.createNamespaceIfMissing(admin, "ns");
+        HbaseTestHelper.createOrTruncateTable(admin, HbaseTestHelper.buildSimpleDescriptor(AUDIT_TABLE, "a"));
+
+        Table table = connection.getTable(AUDIT_TABLE);
 
         logAdapter = new HBaseAdapter(
                 put -> {
@@ -64,7 +84,13 @@ public class RoundTripTest {
         );
 
         logReader = new HBaseReader(
-                hbase::getTable,
+                tableName -> {
+                    try {
+                        return connection.getTable(tableName);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
                 () -> AUDIT_TABLE,
                 () -> "a"
         );
@@ -72,7 +98,7 @@ public class RoundTripTest {
 
     @After
     public void after() throws IOException {
-        hbase.close();
+        connection.close();
     }
 
     @Test

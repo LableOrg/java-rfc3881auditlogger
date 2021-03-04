@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-failsafe-plugin/xsd/failsafe-test-report.xsd" name="org.lable.rfc3881.auditlogger.adapter.hbase.RoundTripIT" time="4.714" tests="1" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="sun.desktop" value="gnome"/>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="java.specification.version" value="11"/>
+    <property name="sun.cpu.isalist" value=""/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/test-classes:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/it-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/adapter-hbase/target/hbase-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/api/target/api-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/definitions-rfc3881/target/rfc3881-2.1-SNAPSHOT.jar:/home/freaknl/.m2/repository/org/lable/codesystem/codereference/1.5/codereference-1.5.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.8/jackson-annotations-2.9.8.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/serialization/target/serialization-2.1-SNAPSHOT.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.8/jackson-databind-2.9.8.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.8/jackson-core-2.9.8.jar:/home/freaknl/.m2/repository/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar:/home/freaknl/.m2/repository/org/lable/oss/bitsandbytes/bitsandbytes/4.0/bitsandbytes-4.0.jar:/home/freaknl/.m2/repository/org/apache/hbase/hbase-shaded-client/2.0.2/hbase-shaded-client-2.0.2.jar:/home/freaknl/.m2/repository/com/github/stephenc/findbugs/findbugs-annotations/1.3.9-1/findbugs-annotations-1.3.9-1.jar:/home/freaknl/.m2/repository/org/apache/htrace/htrace-core4/4.2.0-incubating/htrace-core4-4.2.0-incubating.jar:/home/freaknl/.m2/repository/commons-logging/commons-logging/1.1.3/commons-logging-1.1.3.jar:/home/freaknl/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/home/freaknl/.m2/repository/org/apache/yetus/audience-annotations/0.5.0/audience-annotations-0.5.0.jar:/home/freaknl/.m2/repository/org/glassfish/javax.el/3.0.0/javax.el-3.0.0.jar:/home/freaknl/.m2/repository/org/slf4j/slf4j-simple/1.7.30/slf4j-simple-1.7.30.jar:/home/freaknl/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/freaknl/.m2/repository/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar:/home/freaknl/.m2/repository/com/github/npathai/hamcrest-optional/1.0/hamcrest-optional-1.0.jar:/home/freaknl/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/home/freaknl/.m2/repository/junit/junit/4.13/junit-4.13.jar:/home/freaknl/.m2/repository/org/mockito/mockito-core/3.4.6/mockito-core-3.4.6.jar:/home/freaknl/.m2/repository/net/bytebuddy/byte-buddy/1.10.13/byte-buddy-1.10.13.jar:/home/freaknl/.m2/repository/net/bytebuddy/byte-buddy-agent/1.10.13/byte-buddy-agent-1.10.13.jar:/home/freaknl/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar:"/>
+    <property name="java.vm.vendor" value="AdoptOpenJDK"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="https://adoptopenjdk.net/"/>
+    <property name="user.timezone" value=""/>
+    <property name="java.vm.specification.version" value="11"/>
+    <property name="os.name" value="Linux"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="GB"/>
+    <property name="sun.boot.library.path" value="/home/freaknl/.sdkman/candidates/java/11.0.8.hs-adpt/lib"/>
+    <property name="sun.java.command" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/surefire/surefirebooter3114321731466592215.jar /home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/surefire 2021-03-04T10-43-30_702-jvmRun1 surefire18400438541549119136tmp surefire_0402580887910338833tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/test-classes:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/it-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/adapter-hbase/target/hbase-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/api/target/api-2.1-SNAPSHOT.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/definitions-rfc3881/target/rfc3881-2.1-SNAPSHOT.jar:/home/freaknl/.m2/repository/org/lable/codesystem/codereference/1.5/codereference-1.5.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.8/jackson-annotations-2.9.8.jar:/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/serialization/target/serialization-2.1-SNAPSHOT.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.8/jackson-databind-2.9.8.jar:/home/freaknl/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.8/jackson-core-2.9.8.jar:/home/freaknl/.m2/repository/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar:/home/freaknl/.m2/repository/org/lable/oss/bitsandbytes/bitsandbytes/4.0/bitsandbytes-4.0.jar:/home/freaknl/.m2/repository/org/apache/hbase/hbase-shaded-client/2.0.2/hbase-shaded-client-2.0.2.jar:/home/freaknl/.m2/repository/com/github/stephenc/findbugs/findbugs-annotations/1.3.9-1/findbugs-annotations-1.3.9-1.jar:/home/freaknl/.m2/repository/org/apache/htrace/htrace-core4/4.2.0-incubating/htrace-core4-4.2.0-incubating.jar:/home/freaknl/.m2/repository/commons-logging/commons-logging/1.1.3/commons-logging-1.1.3.jar:/home/freaknl/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/home/freaknl/.m2/repository/org/apache/yetus/audience-annotations/0.5.0/audience-annotations-0.5.0.jar:/home/freaknl/.m2/repository/org/glassfish/javax.el/3.0.0/javax.el-3.0.0.jar:/home/freaknl/.m2/repository/org/slf4j/slf4j-simple/1.7.30/slf4j-simple-1.7.30.jar:/home/freaknl/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/freaknl/.m2/repository/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar:/home/freaknl/.m2/repository/com/github/npathai/hamcrest-optional/1.0/hamcrest-optional-1.0.jar:/home/freaknl/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/home/freaknl/.m2/repository/junit/junit/4.13/junit-4.13.jar:/home/freaknl/.m2/repository/org/mockito/mockito-core/3.4.6/mockito-core-3.4.6.jar:/home/freaknl/.m2/repository/net/bytebuddy/byte-buddy/1.10.13/byte-buddy-1.10.13.jar:/home/freaknl/.m2/repository/net/bytebuddy/byte-buddy-agent/1.10.13/byte-buddy-agent-1.10.13.jar:/home/freaknl/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar:"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="/home/freaknl"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="it" value="true"/>
+    <property name="java.version.date" value="2020-07-14"/>
+    <property name="java.home" value="/home/freaknl/.sdkman/candidates/java/11.0.8.hs-adpt"/>
+    <property name="file.separator" value="/"/>
+    <property name="basedir" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="surefire.real.class.path" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target/surefire/surefirebooter3114321731466592215.jar"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="11.0.8+10"/>
+    <property name="user.name" value="freaknl"/>
+    <property name="path.separator" value=":"/>
+    <property name="os.version" value="4.13.0-21-generic"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="AdoptOpenJDK"/>
+    <property name="localRepository" value="/home/freaknl/.m2/repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/AdoptOpenJDK/openjdk-support/issues"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="java.version" value="11.0.8"/>
+    <property name="user.dir" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.library.path" value="/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.vendor" value="AdoptOpenJDK"/>
+    <property name="java.vm.version" value="11.0.8+10"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="55.0"/>
+    <property name="buildDirectory" value="/home/freaknl/Development/lable/dev/java-rfc3881auditlogger/test/it/target"/>
+  </properties>
+  <testcase name="roundTripTest" classname="org.lable.rfc3881.auditlogger.adapter.hbase.RoundTripIT" time="4.645"/>
+</testsuite>
