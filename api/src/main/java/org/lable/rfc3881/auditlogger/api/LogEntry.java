@@ -87,7 +87,7 @@ public class LogEntry implements Comparable<LogEntry> {
      * This optional field is not part of RFC 3881.
      */
     Referenceable version;
-
+    
     public LogEntry(Event event,
                     Principal requestor,
                     Principal delegator,

@@ -198,7 +198,7 @@ public class RoundTripIT {
         logAdapter.record(entryNullish);
         logAdapter.record(entryFullish);
 
-        List<LogEntry> entries = logReader.read(2);
+        List<LogEntry> entries = logReader.defineQuery().withLimit(2L).execute();
 
         assertThat(entries.size(), is(2));
 

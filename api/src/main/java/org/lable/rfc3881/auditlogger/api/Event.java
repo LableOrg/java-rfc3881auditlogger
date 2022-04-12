@@ -83,6 +83,8 @@ public class Event implements Serializable, Comparable<Event> {
      */
     final List<CodeReference> types;
 
+    byte[] raw8id;
+
     /**
      * Define an audit event.
      * <p>
@@ -123,6 +125,14 @@ public class Event implements Serializable, Comparable<Event> {
                               @JsonProperty("action") CodeReference eventAction,
                               @JsonProperty("types") List<CodeReference> types) {
         return new Event(id, eventAction, happenedAt, eventOutcome, types);
+    }
+
+    public void setRaw8id(byte[] raw8id) {
+        this.raw8id = raw8id;
+    }
+
+    public byte[] getRaw8id() {
+        return raw8id;
     }
 
     /**

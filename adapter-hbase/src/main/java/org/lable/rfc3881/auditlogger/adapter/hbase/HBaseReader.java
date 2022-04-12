@@ -83,7 +83,11 @@ public class HBaseReader implements AuditLogReader {
      * {@inheritDoc}
      */
     @Override
-    public List<LogEntry> read(Instant from, Instant to, Long limit, LogFilter filter) throws IOException {
+    public List<LogEntry> read(
+            AuditlogQuery query
+    ) throws IOException {
+        LogFilter filter = query.getFilter();
+
         if (filter == null) filter = LogFilter.empty();
         byte[] cf = columnFamilySetting.get().getBytes(StandardCharsets.UTF_8);
 
@@ -133,23 +137,36 @@ public class HBaseReader implements AuditLogReader {
 
         }
 
+        Instant from = query.getFrom();
+        Instant to = query.getTo();
+        byte[] startRowId = query.getStartRowId();
         if (from != null) {
             if (to == null) {
                 // Reverse scan.
                 scan.setReversed(true);
                 byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli() - 1)));
+                if (startRowId != null) {
+                    start = ByteMangler.add(start, startRowId);
+                }
                 scan.withStartRow(start);
             } else {
                 byte[] stop = ByteMangler.plusOne(ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli()))));
                 scan.withStopRow(stop);
                 byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
+                if (startRowId != null) {
+                    start = ByteMangler.add(start, startRowId);
+                }
                 scan.withStartRow(start);
             }
         } else if (to != null) {
             byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
+            if (startRowId != null) {
+                start = ByteMangler.add(start, startRowId);
+            }
             scan.withStartRow(start);
         }
 
+        Long limit = query.getLimit();
         if (limit != null && limit > 0) {
             PageFilter pageFilter = new PageFilter(limit);
             filters.addFilter(pageFilter);
@@ -188,6 +205,10 @@ public class HBaseReader implements AuditLogReader {
 
         Event event = readObjectFromResult(objectMapper, Event.class, familyValues, row, "event");
         if (event == null) return Optional.empty();
+
+        byte[] timestampAndId = ByteMangler.shrink(16, row);
+        byte[] id8 = ByteMangler.chomp(8, timestampAndId);
+        event.setRaw8id(id8);
 
         Principal requestor = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "requestor");
         Principal delegator = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "delegator");
