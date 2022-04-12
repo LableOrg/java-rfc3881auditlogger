@@ -28,10 +28,8 @@ import org.lable.rfc3881.auditlogger.definition.rfc3881.eventtypes.UserAccessEve
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,6 +82,11 @@ public class Event implements Serializable, Comparable<Event> {
     final List<CodeReference> types;
 
     /**
+     * Unique 8 byte identifier for this event.
+     */
+    byte[] uid;
+
+    /**
      * Define an audit event.
      * <p>
      * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
@@ -123,6 +126,23 @@ public class Event implements Serializable, Comparable<Event> {
                               @JsonProperty("action") CodeReference eventAction,
                               @JsonProperty("types") List<CodeReference> types) {
         return new Event(id, eventAction, happenedAt, eventOutcome, types);
+    }
+
+    /**
+     * Set unique 8 byte identifier.
+     */
+    public void setUid(byte[] uid) {
+        if (uid != null && uid.length != 8) {
+            throw new IllegalArgumentException("Value must be eight bytes long.");
+        }
+        this.uid = uid;
+    }
+
+    /**
+     * @return Unique 8 byte identifier.
+     */
+    public byte[] getUid() {
+        return uid;
     }
 
     /**

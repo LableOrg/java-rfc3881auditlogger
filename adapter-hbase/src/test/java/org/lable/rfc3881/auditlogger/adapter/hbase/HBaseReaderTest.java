@@ -85,7 +85,7 @@ public class HBaseReaderTest {
             logs =
 
                     // Laatste n logs.
-                    logReader.read(10, filter);
+                    logReader.defineQuery().withLimit(10L).withFilter(filter).execute();
 
                     // Toon n logs vanaf een tijdstip.
 //                    logReader.read(at, null, 2L, filter);
