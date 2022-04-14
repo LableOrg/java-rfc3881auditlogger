@@ -21,12 +21,12 @@
   <parent>
     <groupId>org.lable.rfc3881.auditlogger</groupId>
     <artifactId>auditlogger</artifactId>
-    <version>2.2-SNAPSHOT</version>
+    <version>2.3</version>
   </parent>
 
   <groupId>org.lable.rfc3881.auditlogger.adapter</groupId>
   <artifactId>slf4j</artifactId>
-  <version>2.2-SNAPSHOT</version>
+  <version>2.3</version>
   <packaging>jar</packaging>
 
   <name>IETF/RFC 3881 Audit Logger :: Adapter:SLF4J</name>
