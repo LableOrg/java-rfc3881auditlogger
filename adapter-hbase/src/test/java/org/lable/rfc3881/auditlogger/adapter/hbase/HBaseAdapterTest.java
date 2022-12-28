@@ -25,6 +25,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
+import org.lable.codesystem.codereference.Referenceable;
+import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
 
@@ -32,12 +34,26 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.apache.hadoop.hbase.util.Bytes.toBytes;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.NULL_BYTE;
+import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.columnQualifierSuffixFor;
+
 public class HBaseAdapterTest {
     Random random = new Random();
     char[] eightIdIshPool = {
             'x', 'c', 'd', 'f', 'g', 'k', 'm', 'p',
             'q', 'r', 's', 't', 'v', 'w', 'b', 'z'
     };
+
+    @Test
+    public void columnQualifierSuffixForTest() {
+        AuditSource source = new AuditSource("ñ", "ñ", true, (Referenceable) null);
+        byte[] suffix = columnQualifierSuffixFor(source);
+        byte[] asBytes = toBytes("ñ");
+        assertThat(suffix, is(ByteMangler.add(asBytes, NULL_BYTE, asBytes)));
+    }
 
     @Test
     @Ignore
@@ -59,7 +75,7 @@ public class HBaseAdapterTest {
                         }
                     },
                     () -> "a",
-                    () -> Bytes.toBytes(uid.getAndIncrement())
+                    () -> toBytes(uid.getAndIncrement())
             );
 
             long instant = System.currentTimeMillis() - 1_000_000;
@@ -133,7 +149,7 @@ public class HBaseAdapterTest {
                         }
                     },
                     () -> "a",
-                    () -> Bytes.toBytes(uid.getAndIncrement())
+                    () -> toBytes(uid.getAndIncrement())
             );
 
             long instant = System.currentTimeMillis() - 1_000_000;

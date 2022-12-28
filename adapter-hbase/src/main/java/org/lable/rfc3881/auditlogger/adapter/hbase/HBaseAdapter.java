@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -134,17 +135,22 @@ public class HBaseAdapter implements AuditLogAdapter {
 
     static byte[] columnQualifierSuffixFor(Identifiable identifiable) {
         List<String> parts = identifiable.identifyingStack();
+        List<byte[]> byteParts = new ArrayList<>();
+
         // Account for the separator bytes.
         int targetLength = parts.size() - 1;
         for (String part : parts) {
             if (part != null) {
-                targetLength += part.length();
+                byte[] asBytes = toBytes(part);
+                targetLength += asBytes.length;
+                byteParts.add(asBytes);
             }
         }
 
         ByteBuffer buffer = ByteBuffer.allocate(targetLength);
         boolean first = true;
-        for (String part : parts) {
+
+        for (byte[] part : byteParts) {
             if (!first) {
                 buffer.put(NULL_BYTE);
             } else {
@@ -152,7 +158,7 @@ public class HBaseAdapter implements AuditLogAdapter {
             }
 
             if (part != null) {
-                buffer.put(toBytes(part));
+                buffer.put(part);
             }
         }
 
