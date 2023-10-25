@@ -72,13 +72,14 @@ public class RoundTripIT {
         Table table = connection.getTable(AUDIT_TABLE);
 
         logAdapter = new HBaseAdapter(
-                put -> {
+                (ignored, put) -> {
                     try {
                         table.put(put);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 },
+                logEntry -> AUDIT_TABLE,
                 () -> "a",
                 () -> Bytes.toBytes(uid.getAndIncrement())
         );

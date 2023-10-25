@@ -17,6 +17,7 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -37,7 +38,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.apache.hadoop.hbase.util.Bytes.toBytes;
@@ -52,7 +55,8 @@ public class HBaseAdapter implements AuditLogAdapter {
 
     static ObjectMapper objectMapper;
 
-    private final Consumer<Put> putConsumer;
+    private final BiConsumer<TableName, Put> putConsumer;
+    private final Function<LogEntry, TableName> tableDecider;
     private final Supplier<String> columnFamilySetting;
     private final Supplier<byte[]> uniqueIDGenerator;
 
@@ -60,14 +64,17 @@ public class HBaseAdapter implements AuditLogAdapter {
      * Create a new {@link HBaseAdapter}.
      *
      * @param putConsumer         A consumer that will handle persisting the generated {@link Put}.
+     * @param tableDecider        Provides the {@link TableName} for any given {@link LogEntry}.
      * @param columnFamilySetting A supplier that returns the column family that should be used for the logs.
      * @param uniqueIDGenerator   A supplier that returns a unique identifier on each call.
      */
     @Inject
-    public HBaseAdapter(@Named("hbase-put-consumer") Consumer<Put> putConsumer,
+    public HBaseAdapter(@Named("hbase-put-consumer") BiConsumer<TableName, Put> putConsumer,
+                        @Named("hbase-table-decider") Function<LogEntry, TableName> tableDecider,
                         @Named("audit-column-family") Supplier<String> columnFamilySetting,
                         @Named("uid-generator") Supplier<byte[]> uniqueIDGenerator) {
         this.putConsumer = putConsumer;
+        this.tableDecider = tableDecider;
         this.columnFamilySetting = columnFamilySetting;
         this.uniqueIDGenerator = uniqueIDGenerator;
     }
@@ -99,7 +106,10 @@ public class HBaseAdapter implements AuditLogAdapter {
         addIfNotNull(put, "source", logEntry.getAuditSources());
         addIfNotNull(put, "object", logEntry.getParticipantObjects());
         addIfNotNull(put, "version", logEntry.getVersion());
-        putConsumer.accept(put);
+
+        TableName tableName = tableDecider.apply(logEntry);
+
+        putConsumer.accept(tableName, put);
     }
 
     void addIfNotNull(Put put, String qualifier, Object value) throws JsonProcessingException {

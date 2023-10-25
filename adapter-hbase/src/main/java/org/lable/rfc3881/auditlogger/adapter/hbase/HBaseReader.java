@@ -110,7 +110,6 @@ public class HBaseReader implements AuditLogReader {
 
         String principal = filter.getPrincipal();
         if (principal != null) {
-            System.out.println(principal);
             // Filter on principal involved.
             filters.addFilter(new FilterList(
                     FilterList.Operator.MUST_PASS_ONE,

@@ -41,7 +41,9 @@ public class HBaseReaderTest {
     @Ignore
     public void readSome() throws IOException {
         Configuration conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
         try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
 
             AuditLogReader logReader = new HBaseReader(
@@ -52,7 +54,7 @@ public class HBaseReaderTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("audit", "care_master_stable"),
+                    () -> TableName.valueOf("audit", "care_thor"),
                     () -> "a"
             );
 

@@ -61,19 +61,24 @@ public class HBaseAdapterTest {
         AtomicLong uid = new AtomicLong();
 
         Configuration conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
+        TableName tableName = TableName.valueOf("jeroen", "audit_test");
+
         try (
                 Connection hConnection = ConnectionFactory.createConnection(conf);
-                Table table = hConnection.getTable(TableName.valueOf("jeroen", "audit_test2"))
+                Table table = hConnection.getTable(tableName)
         ) {
             AuditLogAdapter auditLogAdapter = new HBaseAdapter(
-                    put -> {
+                    (ignored, put) -> {
                         try {
                             table.put(put);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     },
+                    logEntry -> tableName,
                     () -> "a",
                     () -> toBytes(uid.getAndIncrement())
             );
@@ -134,20 +139,22 @@ public class HBaseAdapterTest {
         }
 
         Configuration conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "tzka,tzkb,tzkc");
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
         try (
-                Connection hConnection = ConnectionFactory.createConnection(conf);
-                Table table = hConnection.getTable(TableName.valueOf("jeroen", "audit_test5"))
+                Connection hConnection = ConnectionFactory.createConnection(conf)
         ) {
 
             AuditLogAdapter auditLogAdapter = new HBaseAdapter(
-                    put -> {
-                        try {
+                    (tableName, put) -> {
+                        try (Table table = hConnection.getTable(tableName)) {
                             table.put(put);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     },
+                    logEntry -> TableName.valueOf("jeroen", "audit_test"),
                     () -> "a",
                     () -> toBytes(uid.getAndIncrement())
             );
