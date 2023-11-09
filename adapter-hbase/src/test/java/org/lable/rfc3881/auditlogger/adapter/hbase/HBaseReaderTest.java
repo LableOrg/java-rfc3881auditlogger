@@ -16,16 +16,17 @@
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.rfc3881.auditlogger.api.AuditLogReader;
 import org.lable.rfc3881.auditlogger.api.LogEntry;
 import org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions;
 import org.lable.rfc3881.auditlogger.api.LogFilter;
+import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter;
+import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter.FilterMode;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -54,7 +55,7 @@ public class HBaseReaderTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    () -> TableName.valueOf("audit", "care_thor"),
+                    () -> TableName.valueOf("jeroen", "audit"),
                     () -> "a"
             );
 
@@ -76,6 +77,7 @@ public class HBaseReaderTest {
             LogFilter filter =
 
                     LogFilter.define()
+                            .filterOnAccountDomain("perf", "loki")
 //                            .filterOnEventId("lable/auditevents/resource", "/api/v1/clients")
 //                            .filterOnPrincipalInvolved("domain-master-stable-local//8-mftqfmwtxmqxxxxz")
 //                            .addFilterOnParticipantObject("lable/data-owner/1.0", "client", "8-szmrxptfzmqxxxxz")
@@ -89,7 +91,7 @@ public class HBaseReaderTest {
                     // Laatste n logs.
                     logReader.defineQuery().withLimit(10L).withFilter(filter).execute();
 
-                    // Toon n logs vanaf een tijdstip.
+            // Toon n logs vanaf een tijdstip.
 //                    logReader.read(at, null, 2L, filter);
 //                    logReader.read(then, 1);
 
@@ -104,10 +106,51 @@ public class HBaseReaderTest {
                     EnumSet.noneOf(ToStringOptions.class);
 
 
-
             for (LogEntry log : logs) {
-                System.out.println(log.toString(options));
+                System.out.println(log.getEvent().getId());
+                System.out.println("  " + (log.getRequestor() == null ? "-" : log.getRequestor().getUserId()));
+//                System.out.println(log.toString(options));
             }
         }
+    }
+
+    @Test
+    @Ignore
+    public void readSomeMore() throws IOException {
+        long start = System.nanoTime();
+
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
+        Scan scan = new Scan()
+                .setFilter(new AuditLogPrincipalFilter("a".getBytes(), FilterMode.DOMAIN_SUBSTRING, "perf"))
+                .setLimit(100);
+
+        try (
+                Connection hConnection = ConnectionFactory.createConnection(conf);
+                Table table = hConnection.getTable(TableName.valueOf("jeroen", "audit"));
+                ResultScanner scanner = table.getScanner(scan)
+        ) {
+            for (Result result : scanner) {
+                CellScanner cellScanner = result.cellScanner();
+                while (cellScanner.advance()) {
+                    Cell cell = cellScanner.current();
+                    String cq = Bytes.toStringBinary(CellUtil.cloneQualifier(cell));
+                    if (cq.startsWith("requestor")) {
+                        System.out.print(Bytes.toStringBinary(result.getRow()));
+                        System.out.println("  " + cq);
+                    }
+                    if (cq.startsWith("access")) {
+                        System.out.print(cq + "  ");
+                        System.out.println(Bytes.toStringBinary(CellUtil.cloneValue(cell)));
+                    }
+                }
+            }
+        }
+
+        long stop = System.nanoTime();
+        long took = (stop - start) / 1_000_000;
+        System.out.println("Took: " + took);
     }
 }

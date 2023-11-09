@@ -41,6 +41,7 @@
     <module>definitions-rfc3881</module>
     <module>serialization</module>
     <module>adapter-hbase</module>
+    <module>hbase-filters</module>
     <module>adapter-slf4j</module>
     <module>test</module>
   </modules>

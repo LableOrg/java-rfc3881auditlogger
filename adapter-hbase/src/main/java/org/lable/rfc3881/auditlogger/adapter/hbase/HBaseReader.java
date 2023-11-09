@@ -31,6 +31,8 @@ import org.lable.oss.bitsandbytes.ByteConversion;
 import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.oss.bitsandbytes.BytePrinter;
 import org.lable.rfc3881.auditlogger.api.*;
+import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter;
+import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter.FilterMode;
 import org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +96,7 @@ public class HBaseReader implements AuditLogReader {
         Scan scan = new Scan();
         scan.addFamily(cf);
 
-        FilterList filters = new FilterList();
+        FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
 
         Referenceable eventId = filter.getEventId();
         if (eventId != null) {
@@ -108,15 +110,26 @@ public class HBaseReader implements AuditLogReader {
             ));
         }
 
-        String principal = filter.getPrincipal();
-        if (principal != null) {
+        Set<String> principalFilters = filter.getPrincipalFilter();
+        if (principalFilters != null && !principalFilters.isEmpty()) {
             // Filter on principal involved.
-            filters.addFilter(new FilterList(
-                    FilterList.Operator.MUST_PASS_ONE,
-                    mustInclude(cf, "requestor", principal),
-                    mustInclude(cf, "delegator", principal),
-                    mustInclude(cf, "principal", principal)
-            ));
+            switch (filter.getPrincipalFilterType()) {
+                case EXACT:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_PRINCIPAL, principalFilters));
+                    break;
+                case DOMAIN:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_DOMAIN, principalFilters));
+                    break;
+                case DOMAIN_REGEX:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_REGEX, principalFilters));
+                    break;
+                case DOMAIN_CONTAINS:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_SUBSTRING, principalFilters));
+                    break;
+                case DOMAIN_STARTS_WITH:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_PREFIX, principalFilters));
+                    break;
+            }
         }
 
         List<LogFilter.ObjectId> objectIds = filter.getParticipantObjectIds();
@@ -237,6 +250,21 @@ public class HBaseReader implements AuditLogReader {
         ));
     }
 
+    Filter makePrincipalFilter(byte[] cf, FilterMode filterMode, Set<String> principalFilters) {
+        if (principalFilters.size() == 1) {
+            for (String principalFilter : principalFilters) {
+                // Set notoriously lacks a simple 'get()' for cases like these.
+                return new AuditLogPrincipalFilter(cf, filterMode, principalFilter);
+            }
+            throw new RuntimeException("Impossible situation.");
+        } else {
+            List<Filter> filters = principalFilters.stream()
+                    .map(f -> new AuditLogPrincipalFilter(cf, filterMode, f))
+                    .collect(Collectors.toList());
+            return new FilterList(FilterList.Operator.MUST_PASS_ONE, filters);
+        }
+    }
+
     static <T> List<T> readObjectsFromResult(ObjectMapper objectMapper,
                                              Class<T> objectType,
                                              NavigableMap<byte[], byte[]> columns,
@@ -302,15 +330,6 @@ public class HBaseReader implements AuditLogReader {
         return null;
     }
 
-    Filter mustInclude(byte[] cf, String prefix, String suffix) {
-        byte[] cq = ByteMangler.add(
-                Bytes.toBytes(prefix),
-                new byte[]{0},
-                Bytes.toBytes(suffix)
-        );
-        return mustInclude(cf, cq);
-    }
-
     Filter mustIncludeParticipantObject(byte[] cf, String prefix, Referenceable typeId, String id) {
         CodeReference cr = typeId.toCodeReference();
         byte[] cq = ByteMangler.add(
@@ -322,10 +341,10 @@ public class HBaseReader implements AuditLogReader {
                 new byte[]{0},
                 Bytes.toBytes(id)
         );
-        return mustInclude(cf, cq);
+        return mustIncludeNonEmpty(cf, cq);
     }
 
-    Filter mustInclude(byte[] cf, byte[] cq) {
+    Filter mustIncludeNonEmpty(byte[] cf, byte[] cq) {
         SingleColumnValueFilter filter = new SingleColumnValueFilter(
                 cf,
                 cq,
@@ -335,4 +354,5 @@ public class HBaseReader implements AuditLogReader {
         filter.setFilterIfMissing(true);
         return filter;
     }
+
 }

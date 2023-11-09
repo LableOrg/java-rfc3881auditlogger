@@ -18,13 +18,14 @@ package org.lable.rfc3881.auditlogger.api;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class LogFilter {
     Referenceable eventId;
-    String principal;
+    Set<String> principalFilter;
+    PrincipalFilterType principalFilterType = PrincipalFilterType.EXACT;
     List<ObjectId> participantObjectIds;
+    ParticipantObjectFilterType participantObjectFilterType = ParticipantObjectFilterType.OR;
 
     private LogFilter() {
         this.participantObjectIds = new ArrayList<>();
@@ -42,12 +43,20 @@ public class LogFilter {
         return eventId;
     }
 
-    public String getPrincipal() {
-        return principal;
+    public Set<String> getPrincipalFilter() {
+        return principalFilter;
+    }
+
+    public PrincipalFilterType getPrincipalFilterType() {
+        return principalFilterType;
     }
 
     public List<ObjectId> getParticipantObjectIds() {
         return participantObjectIds;
+    }
+
+    public ParticipantObjectFilterType getParticipantObjectFilterType() {
+        return participantObjectFilterType;
     }
 
     public static class FilterBuilder {
@@ -67,8 +76,87 @@ public class LogFilter {
             return this;
         }
 
+
         public FilterBuilder filterOnPrincipalInvolved(String principal) {
-            logFilter.principal = principal;
+            return principal(PrincipalFilterType.EXACT, principal);
+        }
+
+        public FilterBuilder filterOnPrincipalsInvolved(String... principals) {
+            return principals(PrincipalFilterType.EXACT, principals);
+        }
+
+        public FilterBuilder filterOnPrincipalsInvolved(Collection<String> principals) {
+            return principals(PrincipalFilterType.EXACT, principals);
+        }
+
+
+        public FilterBuilder filterOnAccountDomain(String domain) {
+            return principal(PrincipalFilterType.DOMAIN, domain);
+        }
+
+        public FilterBuilder filterOnAccountDomain(String... domains) {
+            return principals(PrincipalFilterType.DOMAIN, domains);
+        }
+
+        public FilterBuilder filterOnAccountDomain(Collection<String> domains) {
+            return principals(PrincipalFilterType.DOMAIN, domains);
+        }
+
+
+        public FilterBuilder filterOnAccountDomainsStartingWith(String domainPrefix) {
+            return principal(PrincipalFilterType.DOMAIN_STARTS_WITH, domainPrefix);
+        }
+
+        public FilterBuilder filterOnAccountDomainsStartingWith(String... domainPrefixes) {
+            return principals(PrincipalFilterType.DOMAIN_STARTS_WITH, domainPrefixes);
+        }
+
+        public FilterBuilder filterOnAccountDomainsStartingWith(Collection<String> domainPrefixes) {
+            return principals(PrincipalFilterType.DOMAIN_STARTS_WITH, domainPrefixes);
+        }
+
+
+        public FilterBuilder filterOnAccountDomainsContaining(String fragment) {
+            return principal(PrincipalFilterType.DOMAIN_CONTAINS, fragment);
+        }
+
+        public FilterBuilder filterOnAccountDomainsContaining(String... fragments) {
+            return principals(PrincipalFilterType.DOMAIN_CONTAINS, fragments);
+        }
+
+        public FilterBuilder filterOnAccountDomainsContaining(Collection<String> fragments) {
+            return principals(PrincipalFilterType.DOMAIN_CONTAINS, fragments);
+        }
+
+
+        public FilterBuilder filterOnAccountDomainsMatchingRegex(String regex) {
+            return principal(PrincipalFilterType.DOMAIN_REGEX, regex);
+        }
+
+        public FilterBuilder filterOnAccountDomainsMatchingRegex(String... regexes) {
+            return principals(PrincipalFilterType.DOMAIN_REGEX, regexes);
+        }
+
+        public FilterBuilder filterOnAccountDomainsMatchingRegex(Collection<String> regexes) {
+            return principals(PrincipalFilterType.DOMAIN_REGEX, regexes);
+        }
+
+
+        private FilterBuilder principal(PrincipalFilterType principalFilterType, String item) {
+            logFilter.principalFilter = Collections.singleton(item);
+            logFilter.principalFilterType = principalFilterType;
+            return this;
+        }
+
+        private FilterBuilder principals(PrincipalFilterType principalFilterType, String... items) {
+            logFilter.principalFilter = new HashSet<>(Arrays.asList(items));
+            logFilter.principalFilterType = principalFilterType;
+            return this;
+        }
+
+        private FilterBuilder principals(PrincipalFilterType principalFilterType, Collection<String> items) {
+            logFilter.principalFilter = new HashSet<>(items);
+            logFilter.principalFilterType = principalFilterType;
             return this;
         }
 
@@ -78,10 +166,19 @@ public class LogFilter {
             return this;
         }
 
-
         public FilterBuilder addFilterOnParticipantObject(String codeSystem, String code, String id) {
             ObjectId oid = new ObjectId(new CodeReference(codeSystem, code), id);
             logFilter.participantObjectIds.add(oid);
+            return this;
+        }
+
+        public FilterBuilder allParticipantObjectFiltersMustMatch() {
+            logFilter.participantObjectFilterType = ParticipantObjectFilterType.AND;
+            return this;
+        }
+
+        public FilterBuilder atLeastOneParticipantObjectFiltersMustMatch() {
+            logFilter.participantObjectFilterType = ParticipantObjectFilterType.OR;
             return this;
         }
 
@@ -106,5 +203,18 @@ public class LogFilter {
         public String getId() {
             return id;
         }
+    }
+
+    public enum PrincipalFilterType {
+        EXACT,
+        DOMAIN,
+        DOMAIN_REGEX,
+        DOMAIN_CONTAINS,
+        DOMAIN_STARTS_WITH,
+    }
+
+    public enum ParticipantObjectFilterType {
+        AND,
+        OR,
     }
 }

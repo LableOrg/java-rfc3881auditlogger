@@ -41,6 +41,11 @@
       <groupId>org.lable.rfc3881.auditlogger</groupId>
       <artifactId>serialization</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.lable.rfc3881.auditlogger.hbase</groupId>
+      <artifactId>hbase-filters</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!-- External dependencies. -->
     <dependency>
@@ -125,6 +130,7 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.el</artifactId>
       <version>3.0.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
