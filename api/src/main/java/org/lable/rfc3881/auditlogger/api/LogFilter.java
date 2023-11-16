@@ -19,6 +19,7 @@ import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LogFilter {
     Referenceable eventId;
@@ -57,6 +58,25 @@ public class LogFilter {
 
     public ParticipantObjectFilterType getParticipantObjectFilterType() {
         return participantObjectFilterType;
+    }
+
+    @Override
+    public String toString() {
+        List<String> parts = new ArrayList<>();
+        if (eventId != null) {
+            parts.add("event = " + eventId.toCodeReference().toString());
+        }
+        if (principalFilter != null && !principalFilter.isEmpty()) {
+            parts.add("principals = " + principalFilterType + ": " + String.join(",", principalFilter));
+        }
+        if (participantObjectIds != null && !participantObjectIds.isEmpty()) {
+            parts.add(
+                    "participant-objects = " + participantObjectFilterType + ": " +
+                    participantObjectIds.stream().map(Object::toString).collect(Collectors.joining(","))
+            );
+        }
+
+        return "[" + String.join("; ", parts) + "]";
     }
 
     public static class FilterBuilder {
@@ -202,6 +222,11 @@ public class LogFilter {
 
         public String getId() {
             return id;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + typeId.toCodeReference().toString() + ": " + id + ")";
         }
     }
 

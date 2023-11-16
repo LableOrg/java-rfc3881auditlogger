@@ -16,31 +16,36 @@
 
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.rfc3881.auditlogger.api.AuditLogReader.QueryLogger;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
-public class AuditlogQueryBuilder {
-    private final AuditlogQuery query;
+public class AuditLogQueryBuilder {
+    private final AuditLogQuery query;
     private final AuditLogReader reader;
+    private final QueryLogger queryLogger;
 
-    private AuditlogQueryBuilder(AuditlogQuery query, AuditLogReader reader) {
+    private AuditLogQueryBuilder(AuditLogQuery query, AuditLogReader reader, QueryLogger queryLogger) {
         this.query = query;
         this.reader = reader;
+        this.queryLogger = queryLogger;
     }
 
     /**
-     * @param reader The {@link AuditLogReader}.
+     * @param reader      The {@link AuditLogReader}.
+     * @param queryLogger Target for a log line describing the query performed.
      * @return A builder for chaining.
      */
-    public static AuditlogQueryBuilder define(AuditLogReader reader) {
-        return new AuditlogQueryBuilder(new AuditlogQuery(), reader);
+    public static AuditLogQueryBuilder define(AuditLogReader reader, QueryLogger queryLogger) {
+        return new AuditLogQueryBuilder(new AuditLogQuery(), reader, queryLogger);
     }
 
     /**
      * Set {@link Instant} to start querying from (inclusive).
      */
-    public AuditlogQueryBuilder withFrom(Instant from) {
+    public AuditLogQueryBuilder withFrom(Instant from) {
         query.setFrom(from);
         return this;
     }
@@ -48,7 +53,7 @@ public class AuditlogQueryBuilder {
     /**
      * Set {@link Instant} to stop querying at (exclusive).
      */
-    public AuditlogQueryBuilder withTo(Instant to) {
+    public AuditLogQueryBuilder withTo(Instant to) {
         query.setTo(to);
         return this;
     }
@@ -56,7 +61,7 @@ public class AuditlogQueryBuilder {
     /**
      * Set limit. Stop querying once we are at or past this limit.
      */
-    public AuditlogQueryBuilder withLimit(Long limit) {
+    public AuditLogQueryBuilder withLimit(Long limit) {
         query.setLimit(limit);
         return this;
     }
@@ -64,7 +69,7 @@ public class AuditlogQueryBuilder {
     /**
      * Set {@link LogFilter}.
      */
-    public AuditlogQueryBuilder withFilter(LogFilter filter) {
+    public AuditLogQueryBuilder withFilter(LogFilter filter) {
         query.setFilter(filter);
         return this;
     }
@@ -72,15 +77,15 @@ public class AuditlogQueryBuilder {
     /**
      * Set unique eight byte id part of the start row.
      */
-    public AuditlogQueryBuilder withStartRowId(byte[] startRawUid) {
+    public AuditLogQueryBuilder withStartRowId(byte[] startRawUid) {
         query.setStartRowId(startRawUid);
         return this;
     }
 
     /**
-     * Get the {@link AuditlogQuery}.
+     * Get the {@link AuditLogQuery}.
      */
-    public AuditlogQuery getQuery() {
+    public AuditLogQuery getQuery() {
         return query;
     }
 
@@ -88,6 +93,6 @@ public class AuditlogQueryBuilder {
      * Execute the query.
      */
     public List<LogEntry> execute() throws IOException {
-        return reader.read(query);
+        return reader.read(query, queryLogger);
     }
 }

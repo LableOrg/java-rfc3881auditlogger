@@ -26,15 +26,38 @@ public interface AuditLogReader {
     /**
      * Read log entries from the audit log.
      *
-     * @param query The {@link AuditlogQuery}.
+     * @param query The {@link AuditLogQuery}.
      * @return Log entries.
      */
-    List<LogEntry> read(AuditlogQuery query) throws IOException;
+    default List<LogEntry> read(AuditLogQuery query) throws IOException {
+        return read(query, null);
+    }
+
+    /**
+     * Read log entries from the audit log.
+     *
+     * @param query The {@link AuditLogQuery}.
+     * @param queryLogger Target for a log line describing the query performed.
+     * @return Log entries.
+     */
+    List<LogEntry> read(AuditLogQuery query, QueryLogger queryLogger) throws IOException;
 
     /**
      * Start defining the query.
      */
-    default AuditlogQueryBuilder defineQuery() {
-        return AuditlogQueryBuilder.define(this);
+    default AuditLogQueryBuilder defineQuery() {
+        return AuditLogQueryBuilder.define(this, null);
+    }
+
+    /**
+     * Start defining the query.
+     */
+    default AuditLogQueryBuilder defineQuery(QueryLogger queryLogger) {
+        return AuditLogQueryBuilder.define(this, queryLogger);
+    }
+
+    @FunctionalInterface
+    interface QueryLogger {
+        void log(String line);
     }
 }

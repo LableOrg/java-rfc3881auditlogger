@@ -85,9 +85,7 @@ public class HBaseReader implements AuditLogReader {
      * {@inheritDoc}
      */
     @Override
-    public List<LogEntry> read(
-            AuditlogQuery query
-    ) throws IOException {
+    public List<LogEntry> read(AuditLogQuery query, QueryLogger queryLogger) throws IOException {
         LogFilter filter = query.getFilter();
 
         if (filter == null) filter = LogFilter.empty();
@@ -190,8 +188,11 @@ public class HBaseReader implements AuditLogReader {
 
         if (objectMapper == null) objectMapper = ObjectMapperFactory.getObjectMapper();
 
+        TableName tableName = tableNameSetting.get();
+
+        long start = System.nanoTime();
         try (
-                Table table = hbaseConnection.apply(tableNameSetting.get());
+                Table table = hbaseConnection.apply(tableName);
                 ResultScanner scanner = table.getScanner(scan)
         ) {
             Stream<LogEntry> stream = StreamSupport.stream(scanner.spliterator(), false)
@@ -205,7 +206,34 @@ public class HBaseReader implements AuditLogReader {
                 stream = stream.limit(limit);
             }
 
-            return stream.collect(Collectors.toList());
+            long stop = System.nanoTime();
+            long took = (stop - start) / 1_000_000;
+
+            List<LogEntry> result = stream.collect(Collectors.toList());
+
+            if (queryLogger != null) {
+                int count = result.size();
+                String recordCount = "no records returned";
+                if (count == 1) {
+                    recordCount = "1 record";
+                } else if (count > 1) {
+                    recordCount = count + " records";
+                }
+
+                queryLogger.log(
+                        "Querying " + tableName + ":\n"
+                                + query + "\n" +
+                                "Got " + recordCount + "; took: " + took + " ms."
+                );
+            }
+
+            return result;
+        } catch (IOException e) {
+            // Log and rethrow.
+            if (queryLogger != null) {
+                queryLogger.log("Querying " + tableName + " failed with IOException:\n" + query + "\nError: " + e.getMessage());
+            }
+            throw e;
         }
     }
 

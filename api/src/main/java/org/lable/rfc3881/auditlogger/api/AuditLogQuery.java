@@ -16,9 +16,11 @@
 
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.rfc3881.auditlogger.api.util.BytePrinter;
+
 import java.time.Instant;
 
-public class AuditlogQuery {
+public class AuditLogQuery {
     private Instant from;
     private Instant to;
     private Long limit;
@@ -63,5 +65,15 @@ public class AuditlogQuery {
 
     public byte[] getStartRowId() {
         return startRowId;
+    }
+
+    @Override
+    public String toString() {
+        return "Query:\n" +
+                "    from: " + (from == null ? "-" : from) + "\n" +
+                "      to: " + (to == null ? "-" : to) + "\n" +
+                "   start: " + (startRowId == null ? "-" : BytePrinter.toStringBinary(startRowId)) + "\n" +
+                "   limit: " + (limit == null ? "-" : limit) + "\n" +
+                "  filter: " + (filter == null ? "-" : filter);
     }
 }
