@@ -17,6 +17,7 @@
 package org.lable.rfc3881.auditlogger.api;
 
 import org.lable.rfc3881.auditlogger.api.AuditLogReader.QueryLogger;
+import org.lable.rfc3881.auditlogger.api.Event.EventId;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -46,15 +47,63 @@ public class AuditLogQueryBuilder {
      * Set {@link Instant} to start querying from (inclusive).
      */
     public AuditLogQueryBuilder withFrom(Instant from) {
-        query.setFrom(from);
+        query.setFrom(from, true);
         return this;
     }
 
     /**
-     * Set {@link Instant} to stop querying at (exclusive).
+     * Set {@link Instant} to start querying from (inclusive).
+     */
+    public AuditLogQueryBuilder withFrom(Instant from, boolean inclusive) {
+        query.setFrom(from, inclusive);
+        return this;
+    }
+
+    /**
+     * Set {@link Instant} to start querying from (inclusive).
+     */
+    public AuditLogQueryBuilder withFrom(EventId from) {
+        query.setFrom(from, true);
+        return this;
+    }
+
+    /**
+     * Set {@link Instant} to start querying from (inclusive).
+     */
+    public AuditLogQueryBuilder withFrom(EventId from, boolean inclusive) {
+        query.setFrom(from, inclusive);
+        return this;
+    }
+
+    /**
+     * Set {@link EventId} to stop querying at (exclusive).
      */
     public AuditLogQueryBuilder withTo(Instant to) {
-        query.setTo(to);
+        query.setTo(to, false);
+        return this;
+    }
+
+    /**
+     * Set {@link EventId} to stop querying at (exclusive).
+     */
+    public AuditLogQueryBuilder withTo(Instant to, boolean inclusive) {
+        query.setTo(to, inclusive);
+        return this;
+    }
+
+    /**
+     * Set {@link EventId} to stop querying at (exclusive).
+     */
+    public AuditLogQueryBuilder withTo(EventId to) {
+        query.setTo(to, false);
+        return this;
+    }
+
+    /**
+     * Set {@link EventId} to stop querying at (exclusive).
+     */
+    public AuditLogQueryBuilder withTo(EventId to, boolean inclusive) {
+        query.setTo(to, inclusive);
         return this;
     }
 
@@ -71,14 +120,6 @@ public class AuditLogQueryBuilder {
      */
     public AuditLogQueryBuilder withFilter(LogFilter filter) {
         query.setFilter(filter);
-        return this;
-    }
-
-    /**
-     * Set unique eight byte id part of the start row.
-     */
-    public AuditLogQueryBuilder withStartRowId(byte[] startRawUid) {
-        query.setStartRowId(startRawUid);
         return this;
     }
 

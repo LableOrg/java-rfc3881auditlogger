@@ -16,23 +16,36 @@
 
 package org.lable.rfc3881.auditlogger.api;
 
-import org.lable.rfc3881.auditlogger.api.util.BytePrinter;
+import org.lable.rfc3881.auditlogger.api.Event.EventId;
 
 import java.time.Instant;
 
 public class AuditLogQuery {
-    private Instant from;
-    private Instant to;
+    private Object from;
+    private Object to;
+    private boolean toInclusive = false;
+    private boolean fromInclusive = true;
     private Long limit;
     private LogFilter filter;
-    private byte[] startRowId;
 
-    public void setFrom(Instant from) {
+    public void setFrom(Instant from, boolean inclusive) {
         this.from = from;
+        this.fromInclusive = inclusive;
     }
 
-    public void setTo(Instant to) {
+    public void setFrom(EventId from, boolean inclusive) {
+        this.from = from;
+        this.fromInclusive = inclusive;
+    }
+
+    public void setTo(Instant to, boolean inclusive) {
         this.to = to;
+        this.toInclusive = inclusive;
+    }
+
+    public void setTo(EventId to, boolean inclusive) {
+        this.to = to;
+        this.toInclusive = inclusive;
     }
 
     public void setLimit(Long limit) {
@@ -43,16 +56,36 @@ public class AuditLogQuery {
         this.filter = filter;
     }
 
-    public void setStartRowId(byte[] startRowId) {
-        this.startRowId = startRowId;
+    public boolean hasFrom() {
+        return from != null;
     }
 
-    public Instant getFrom() {
-        return from;
+    public boolean hasTo() {
+        return to != null;
     }
 
-    public Instant getTo() {
-        return to;
+    public Instant getFromAsInstant() {
+        return from instanceof Instant ? (Instant) from : null;
+    }
+
+    public EventId getFromAsEventId() {
+        return from instanceof EventId ? (EventId) from : null;
+    }
+
+    public Instant getToAsInstant() {
+        return to instanceof Instant ? (Instant) to : null;
+    }
+
+    public EventId getToAsEventId() {
+        return to instanceof EventId ? (EventId) to : null;
+    }
+
+    public boolean isToInclusive() {
+        return toInclusive;
+    }
+
+    public boolean isFromInclusive() {
+        return fromInclusive;
     }
 
     public Long getLimit() {
@@ -63,16 +96,11 @@ public class AuditLogQuery {
         return filter;
     }
 
-    public byte[] getStartRowId() {
-        return startRowId;
-    }
-
     @Override
     public String toString() {
         return "Query:\n" +
                 "    from: " + (from == null ? "-" : from) + "\n" +
                 "      to: " + (to == null ? "-" : to) + "\n" +
-                "   start: " + (startRowId == null ? "-" : BytePrinter.toStringBinary(startRowId)) + "\n" +
                 "   limit: " + (limit == null ? "-" : limit) + "\n" +
                 "  filter: " + (filter == null ? "-" : filter);
     }

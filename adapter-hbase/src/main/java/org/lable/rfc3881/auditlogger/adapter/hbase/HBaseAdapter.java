@@ -24,11 +24,9 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Identifiable;
 import org.lable.codesystem.codereference.Referenceable;
+import org.lable.oss.bitsandbytes.ByteConversion;
 import org.lable.oss.bitsandbytes.ByteMangler;
-import org.lable.rfc3881.auditlogger.api.AuditLogAdapter;
-import org.lable.rfc3881.auditlogger.api.EntryPart;
-import org.lable.rfc3881.auditlogger.api.Event;
-import org.lable.rfc3881.auditlogger.api.LogEntry;
+import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory;
 
 import javax.inject.Inject;
@@ -58,7 +56,7 @@ public class HBaseAdapter implements AuditLogAdapter {
     private final BiConsumer<TableName, Put> putConsumer;
     private final Function<LogEntry, TableName> tableDecider;
     private final Supplier<String> columnFamilySetting;
-    private final Supplier<byte[]> uniqueIDGenerator;
+    private final Supplier<Long> uniqueIDGenerator;
 
     /**
      * Create a new {@link HBaseAdapter}.
@@ -72,7 +70,7 @@ public class HBaseAdapter implements AuditLogAdapter {
     public HBaseAdapter(@Named("hbase-put-consumer") BiConsumer<TableName, Put> putConsumer,
                         @Named("hbase-table-decider") Function<LogEntry, TableName> tableDecider,
                         @Named("audit-column-family") Supplier<String> columnFamilySetting,
-                        @Named("uid-generator") Supplier<byte[]> uniqueIDGenerator) {
+                        @Named("uid-generator") Supplier<Long> uniqueIDGenerator) {
         this.putConsumer = putConsumer;
         this.tableDecider = tableDecider;
         this.columnFamilySetting = columnFamilySetting;
@@ -96,9 +94,18 @@ public class HBaseAdapter implements AuditLogAdapter {
     @Override
     public void record(LogEntry logEntry) throws IOException {
         if (logEntry == null) return;
+        Event event = logEntry.getEvent();
+        UniqueEvent uEvent;
+        if (event instanceof UniqueEvent) {
+            uEvent = (UniqueEvent) event;
+        } else {
+            uEvent = UniqueEvent.fromEvent(logEntry.getEvent(), uniqueIDGenerator.get());
+            logEntry.setEvent(uEvent);
+        }
 
-        Put put = new Put(rowKeyFor(logEntry, uniqueIDGenerator.get()));
-        addIfNotNull(put, "event", logEntry.getEvent());
+
+        Put put = new Put(rowKeyFor(uEvent.toId()));
+        addIfNotNull(put, "event", uEvent);
         addIfNotNull(put, "requestor", logEntry.getRequestor());
         addIfNotNull(put, "delegator", logEntry.getDelegator());
         addIfNotNull(put, "access_point", logEntry.getNetworkAccessPoint());
@@ -175,13 +182,12 @@ public class HBaseAdapter implements AuditLogAdapter {
         return buffer.array();
     }
 
-    static byte[] rowKeyFor(LogEntry logEntry, byte[] uid) {
-        Event event = logEntry.getEvent();
+    static byte[] rowKeyFor(Event.EventId eventId) {
         return Bytes.add(
                 // Flip the bytes in the data to order descending; latest event first.
-                ByteMangler.flip(flipTheFirstBit(toBytes(event.getHappenedAt()))),
-                uid,
-                referenceableToBytes(event.getId())
+                ByteMangler.flip(flipTheFirstBit(toBytes(eventId.getHappenedAt()))),
+                ByteConversion.fromLong(eventId.getUid()),
+                referenceableToBytes(eventId.getId())
         );
     }
 

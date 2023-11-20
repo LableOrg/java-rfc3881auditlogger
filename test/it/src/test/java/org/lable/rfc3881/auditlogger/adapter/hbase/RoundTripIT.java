@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 
 public class RoundTripIT {
@@ -81,7 +82,7 @@ public class RoundTripIT {
                 },
                 logEntry -> AUDIT_TABLE,
                 () -> "a",
-                () -> Bytes.toBytes(uid.getAndIncrement())
+                uid::getAndIncrement
         );
 
         logReader = new HBaseReader(

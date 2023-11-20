@@ -80,7 +80,7 @@ public class HBaseAdapterTest {
                     },
                     logEntry -> tableName,
                     () -> "a",
-                    () -> toBytes(uid.getAndIncrement())
+                    uid::getAndIncrement
             );
 
             long instant = System.currentTimeMillis() - 1_000_000;
@@ -156,7 +156,7 @@ public class HBaseAdapterTest {
                     },
                     logEntry -> TableName.valueOf("jeroen", "audit_test"),
                     () -> "a",
-                    () -> toBytes(uid.getAndIncrement())
+                    uid::getAndIncrement
             );
 
             long instant = System.currentTimeMillis() - 1_000_000;

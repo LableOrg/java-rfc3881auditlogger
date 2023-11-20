@@ -82,19 +82,14 @@ public class Event implements Serializable, Comparable<Event> {
     final List<CodeReference> types;
 
     /**
-     * Unique 8 byte identifier for this event.
-     */
-    byte[] uid;
-
-    /**
      * Define an audit event.
      * <p>
-     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
-     * lot of event types the event-id will be something defined within your projects.
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a lot
+     * of event types the event-id will be something defined within your projects.
      * <p>
      * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
-     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
-     * types to an event to help categorize it.
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event types
+     * to an event to help categorize it.
      *
      * @param id           Identifier.
      * @param eventAction  Audit action.
@@ -129,31 +124,14 @@ public class Event implements Serializable, Comparable<Event> {
     }
 
     /**
-     * Set unique 8 byte identifier.
-     */
-    public void setUid(byte[] uid) {
-        if (uid != null && uid.length != 8) {
-            throw new IllegalArgumentException("Value must be eight bytes long.");
-        }
-        this.uid = uid;
-    }
-
-    /**
-     * @return Unique 8 byte identifier.
-     */
-    public byte[] getUid() {
-        return uid;
-    }
-
-    /**
      * Define an audit event that took place just now.
      * <p>
-     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
-     * lot of event types the event-id will be something defined within your projects.
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a lot
+     * of event types the event-id will be something defined within your projects.
      * <p>
      * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
-     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
-     * types to an event to help categorize it.
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event types
+     * to an event to help categorize it.
      *
      * @param id           Event identifier.
      * @param eventAction  Audit action.
@@ -171,8 +149,8 @@ public class Event implements Serializable, Comparable<Event> {
      * Define an audit event with a {@link Categorizable} event-id. This type of event-id knows which event types it is
      * classified under.
      * <p>
-     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
-     * lot of event types the event-id will be something defined within your projects.
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a lot
+     * of event types the event-id will be something defined within your projects.
      *
      * @param id           Identifier with event type association.
      * @param eventAction  Audit action.
@@ -185,12 +163,12 @@ public class Event implements Serializable, Comparable<Event> {
     /**
      * Define an audit event.
      * <p>
-     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
-     * lot of event types the event-id will be something defined within your projects.
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a lot
+     * of event types the event-id will be something defined within your projects.
      * <p>
      * RFC 3881 lists three categories of event types; these are defined in {@link AuditAdministrationEventType},
-     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event
-     * types to an event to help categorize it.
+     * {@link SecurityAdministrationEventType}, and {@link UserAccessEventType}. Add any number of relevant event types
+     * to an event to help categorize it.
      *
      * @param id           Identifier.
      * @param eventAction  Audit action.
@@ -213,8 +191,8 @@ public class Event implements Serializable, Comparable<Event> {
      * Define an audit event with a {@link Categorizable} event-id. This type of event-id knows which event types it is
      * classified under.
      * <p>
-     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a
-     * lot of event types the event-id will be something defined within your projects.
+     * The event-id may be domain-specific. A set of common generic events is provided with this library, but for a lot
+     * of event types the event-id will be something defined within your projects.
      *
      * @param id           Identifier with event type association.
      * @param eventAction  Audit action.
@@ -277,7 +255,7 @@ public class Event implements Serializable, Comparable<Event> {
 
     @Override
     public int compareTo(Event other) {
-        if (other == null) return -1;
+        if (other == null) throw new NullPointerException();
         if (this == other) return 0;
 
         return Long.compare(this.getHappenedAt(), other.getHappenedAt());
@@ -291,15 +269,44 @@ public class Event implements Serializable, Comparable<Event> {
 
         return "ID:          " + getId() +
                 "\nAction:      " + EventAction.fromReferenceable(getAction())
-                        .map(EventAction::getDisplayName)
-                        .orElse(getAction().getCode()) +
+                .map(EventAction::getDisplayName)
+                .orElse(getAction().getCode()) +
                 "\nAt:          " + DateTimeFormatter.ISO_INSTANT.format(at) +
-                " (" + DateTimeFormatter.ofPattern("d MMM YYYY, HH:mm:ss")
+                " (" + DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm:ss")
                 .withZone(ZoneId.systemDefault())
                 .format(at) + ", " + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")" +
                 "\nOutcome:     " + EventOutcome.fromReferenceable(getOutcome())
-                        .map(EventOutcome::getDisplayName)
-                        .orElse(getOutcome().getCode()) +
+                .map(EventOutcome::getDisplayName)
+                .orElse(getOutcome().getCode()) +
                 "\nType:        " + getTypes();
+    }
+
+    public static class EventId {
+        final Referenceable id;
+        final long happenedAt;
+        final Long uid;
+
+        public EventId(Referenceable id, long happenedAt, Long uid) {
+            this.id = id;
+            this.happenedAt = happenedAt;
+            this.uid = uid;
+        }
+
+        public Referenceable getId() {
+            return id;
+        }
+
+        public long getHappenedAt() {
+            return happenedAt;
+        }
+
+        public long getUid() {
+            return uid;
+        }
+
+        @Override
+        public String toString() {
+            return Instant.ofEpochMilli(happenedAt).toString() + " / " + (uid == null ? "-" : uid) + " / " + id.toCodeReference().toString();
+        }
     }
 }

@@ -21,10 +21,9 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.lable.rfc3881.auditlogger.api.AuditLogReader;
-import org.lable.rfc3881.auditlogger.api.LogEntry;
+import org.lable.codesystem.codereference.CodeReference;
+import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.api.LogEntry.ToStringOptions;
-import org.lable.rfc3881.auditlogger.api.LogFilter;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter.FilterMode;
 
@@ -77,7 +76,7 @@ public class HBaseReaderTest {
             LogFilter filter =
 
                     LogFilter.define()
-                            .filterOnAccountDomain("perf", "loki")
+//                            .filterOnAccountDomain("perf", "loki")
 //                            .filterOnEventId("lable/auditevents/resource", "/api/v1/clients")
 //                            .filterOnPrincipalInvolved("domain-master-stable-local//8-mftqfmwtxmqxxxxz")
 //                            .addFilterOnParticipantObject("lable/data-owner/1.0", "client", "8-szmrxptfzmqxxxxz")
@@ -89,7 +88,23 @@ public class HBaseReaderTest {
             logs =
 
                     // Laatste n logs.
-                    logReader.defineQuery().withLimit(10L).withFilter(filter).execute();
+                    logReader.defineQuery()
+//                            .withFrom(Instant.parse("2023-09-14T11:56:39.361Z"))
+//                            .withFrom(new Event.EventId(
+//                                    new CodeReference("org.lable.auditevents", "SIGN_ON@USERNAME+PASSWORD"),
+//                                    1694691348597L,
+//                                    7108050702198380864L
+//                            ), true)
+                            .withTo(Instant.parse("2023-09-20T08:44:18.969Z"), true)
+                            .withFrom(Instant.parse("2023-09-14T11:35:48.597Z"), false)
+//                            .withLimit(2L)
+//                            .withTo(new Event.EventId(
+//                                    new CodeReference("org.lable.auditevents", "APP_INIT"),
+//                                    1695199458969L,
+//                                    7110181871572488590L
+//                            ), true)
+                            .withFilter(filter)
+                            .execute();
 
             // Toon n logs vanaf een tijdstip.
 //                    logReader.read(at, null, 2L, filter);
@@ -107,8 +122,8 @@ public class HBaseReaderTest {
 
 
             for (LogEntry log : logs) {
-                System.out.println(log.getEvent().getId());
-                System.out.println("  " + (log.getRequestor() == null ? "-" : log.getRequestor().getUserId()));
+                System.out.println(((UniqueEvent) log.getEvent()).toId());
+//                System.out.println("  " + (log.getRequestor() == null ? "-" : log.getRequestor().getUserId()));
 //                System.out.println(log.toString(options));
             }
         }

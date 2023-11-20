@@ -113,6 +113,10 @@ public class LogEntry implements Comparable<LogEntry> {
         return event;
     }
 
+    public void setEvent(Event event) {
+        this.event = event;
+    }
+
     /**
      * @return The requestor ({@link #requestor}).
      */
@@ -188,7 +192,7 @@ public class LogEntry implements Comparable<LogEntry> {
 
     @Override
     public int compareTo(LogEntry other) {
-        if (other == null) return -1;
+        if (other == null) throw new NullPointerException();
         if (this == other) return 0;
 
         return this.getEvent().compareTo(other.getEvent());

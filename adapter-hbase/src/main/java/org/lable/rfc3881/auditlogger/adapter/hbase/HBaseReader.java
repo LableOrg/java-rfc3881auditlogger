@@ -31,6 +31,7 @@ import org.lable.oss.bitsandbytes.ByteConversion;
 import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.oss.bitsandbytes.BytePrinter;
 import org.lable.rfc3881.auditlogger.api.*;
+import org.lable.rfc3881.auditlogger.api.Event.EventId;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter.FilterMode;
 import org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
@@ -51,6 +53,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
+import static org.lable.oss.bitsandbytes.ByteMangler.plusOne;
 import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.INCOMPLETE_MARKER;
 
 /**
@@ -147,33 +150,30 @@ public class HBaseReader implements AuditLogReader {
 
         }
 
-        Instant from = query.getFrom();
-        Instant to = query.getTo();
-        byte[] startRowId = query.getStartRowId();
-        if (from != null) {
-            if (to == null) {
-                // Reverse scan.
-                scan.setReversed(true);
-                byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli() - 1)));
-                if (startRowId != null) {
-                    start = ByteMangler.add(start, startRowId);
-                }
-                scan.withStartRow(start);
-            } else {
-                byte[] stop = ByteMangler.plusOne(ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(from.toEpochMilli()))));
-                scan.withStopRow(stop);
-                byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
-                if (startRowId != null) {
-                    start = ByteMangler.add(start, startRowId);
-                }
-                scan.withStartRow(start);
-            }
-        } else if (to != null) {
-            byte[] start = ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(to.toEpochMilli())));
-            if (startRowId != null) {
-                start = ByteMangler.add(start, startRowId);
-            }
-            scan.withStartRow(start);
+        Instant from = query.getFromAsInstant();
+        EventId fromEvent = query.getFromAsEventId();
+        Instant to = query.getToAsInstant();
+        EventId toEvent = query.getToAsEventId();
+        boolean fromInclusive = query.isFromInclusive();
+        boolean toInclusive = query.isToInclusive();
+
+        if (query.hasFrom() && query.hasTo()) {
+            byte[] start = toInclusive ? getPrefix(to, toEvent) : getPrefixPlusOne(to, toEvent);
+            byte[] stop = fromInclusive ? getPrefixPlusOne(from, fromEvent) : getPrefix(from, fromEvent);
+            scan = scan
+                    .withStartRow(start, true)
+                    .withStopRow(stop, false);
+        } else if (query.hasFrom()) {
+            // No 'to' means we have to scan in reverse from the 'from' up.
+            // For a reversed scan, the start row has to be set on the next possible row prefix, which must be
+            // set as start-row, exclusive.
+            byte[] start = fromInclusive ? getPrefixPlusOne(from, fromEvent) : getPrefix(from, fromEvent);
+            scan = scan
+                    .setReversed(true)
+                    .withStartRow(start, false);
+        } else if (query.hasTo()) {
+            byte[] start = toInclusive ? getPrefix(to, toEvent) : getPrefixPlusOne(to, toEvent);
+            scan = scan.withStartRow(start, true);
         }
 
         Long limit = query.getLimit();
@@ -209,7 +209,19 @@ public class HBaseReader implements AuditLogReader {
             long stop = System.nanoTime();
             long took = (stop - start) / 1_000_000;
 
-            List<LogEntry> result = stream.collect(Collectors.toList());
+            List<LogEntry> result;
+            if (scan.isReversed()) {
+                // Maintain the expected order of new-to-old.
+                result = stream.collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        list -> {
+                            Collections.reverse(list);
+                            return list;
+                        }
+                ));
+            } else {
+                result = stream.collect(Collectors.toList());
+            }
 
             if (queryLogger != null) {
                 int count = result.size();
@@ -237,6 +249,21 @@ public class HBaseReader implements AuditLogReader {
         }
     }
 
+    public static byte[] getPrefixPlusOne(Instant at, EventId eventId) {
+        return plusOne(getPrefix(at, eventId));
+    }
+
+    public static byte[] getPrefix(Instant at, EventId eventId) {
+        if (at != null) {
+            return ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(at.toEpochMilli())));
+        } else {
+            return ByteMangler.add(
+                    ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(eventId.getHappenedAt()))),
+                    ByteConversion.fromLong(eventId.getUid())
+            );
+        }
+    }
+
     public static Optional<LogEntry> parseEntry(ObjectMapper objectMapper, Result result, byte[] cf) {
         if (result == null || result.isEmpty()) return Optional.empty();
 
@@ -246,9 +273,10 @@ public class HBaseReader implements AuditLogReader {
         Event event = readObjectFromResult(objectMapper, Event.class, familyValues, row, "event");
         if (event == null) return Optional.empty();
 
-        byte[] timestampAndId = ByteMangler.shrink(16, row);
-        byte[] uid = ByteMangler.chomp(8, timestampAndId);
-        event.setUid(uid);
+        // Grab the unique identifier from the row key. This is represented by 8 bytes starting from position 8.
+        ByteBuffer bb = ByteBuffer.allocate(row.length);
+        bb.put(row);
+        event = UniqueEvent.fromEvent(event, bb.getLong(8));
 
         Principal requestor = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "requestor");
         Principal delegator = readObjectFromResult(objectMapper, Principal.class, familyValues, row, "delegator");
