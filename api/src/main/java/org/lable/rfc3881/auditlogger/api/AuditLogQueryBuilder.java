@@ -45,6 +45,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link Instant} to start querying from (inclusive).
+     *
+     * @param from Instant to start from.
      */
     public AuditLogQueryBuilder withFrom(Instant from) {
         query.setFrom(from, true);
@@ -52,7 +54,10 @@ public class AuditLogQueryBuilder {
     }
 
     /**
-     * Set {@link Instant} to start querying from (inclusive).
+     * Set {@link Instant} to start querying from.
+     *
+     * @param from      Instant to start from.
+     * @param inclusive Whether this limit is inclusive or exclusive.
      */
     public AuditLogQueryBuilder withFrom(Instant from, boolean inclusive) {
         query.setFrom(from, inclusive);
@@ -61,6 +66,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link Instant} to start querying from (inclusive).
+     *
+     * @param from Event to start from.
      */
     public AuditLogQueryBuilder withFrom(EventId from) {
         query.setFrom(from, true);
@@ -69,6 +76,9 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link Instant} to start querying from (inclusive).
+     *
+     * @param from      Event to start from.
+     * @param inclusive Whether this limit is inclusive or exclusive.
      */
     public AuditLogQueryBuilder withFrom(EventId from, boolean inclusive) {
         query.setFrom(from, inclusive);
@@ -77,6 +87,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link EventId} to stop querying at (exclusive).
+     *
+     * @param to Instant to end at.
      */
     public AuditLogQueryBuilder withTo(Instant to) {
         query.setTo(to, false);
@@ -84,7 +96,10 @@ public class AuditLogQueryBuilder {
     }
 
     /**
-     * Set {@link EventId} to stop querying at (exclusive).
+     * Set {@link EventId} to stop querying at.
+     *
+     * @param to        Instant to end at.
+     * @param inclusive Whether this limit is inclusive or exclusive.
      */
     public AuditLogQueryBuilder withTo(Instant to, boolean inclusive) {
         query.setTo(to, inclusive);
@@ -93,6 +108,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link EventId} to stop querying at (exclusive).
+     *
+     * @param to Event to end at.
      */
     public AuditLogQueryBuilder withTo(EventId to) {
         query.setTo(to, false);
@@ -100,7 +117,10 @@ public class AuditLogQueryBuilder {
     }
 
     /**
-     * Set {@link EventId} to stop querying at (exclusive).
+     * Set {@link EventId} to stop querying at.
+     *
+     * @param to        Event to end at.
+     * @param inclusive Whether this limit is inclusive or exclusive.
      */
     public AuditLogQueryBuilder withTo(EventId to, boolean inclusive) {
         query.setTo(to, inclusive);
@@ -109,6 +129,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set limit. Stop querying once we are at or past this limit.
+     *
+     * @param limit Limit.
      */
     public AuditLogQueryBuilder withLimit(Long limit) {
         query.setLimit(limit);
@@ -117,6 +139,8 @@ public class AuditLogQueryBuilder {
 
     /**
      * Set {@link LogFilter}.
+     *
+     * @param filter Filter.
      */
     public AuditLogQueryBuilder withFilter(LogFilter filter) {
         query.setFilter(filter);
