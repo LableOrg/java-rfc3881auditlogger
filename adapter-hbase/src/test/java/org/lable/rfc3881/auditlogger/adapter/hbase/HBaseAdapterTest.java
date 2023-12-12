@@ -16,16 +16,16 @@
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lable.codesystem.codereference.CodeReference;
-import org.lable.codesystem.codereference.Referenceable;
 import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.definition.rfc3881.*;
@@ -57,6 +57,115 @@ public class HBaseAdapterTest {
 
     @Test
     @Ignore
+    public void cursorTest() throws IOException {
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
+        conf.set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, "1000");
+
+        TableName tableName = TableName.valueOf("audit", "care_loki");
+
+        long start = System.currentTimeMillis();
+        System.out.println("Scan");
+        try (
+                Connection hConnection = ConnectionFactory.createConnection(conf);
+                Table table = hConnection.getTable(tableName)
+        ) {
+            Scan scan = new Scan();
+            scan.setLimit(1)
+                    .setNeedCursorResult(true)
+                    .setFilter(new SingleColumnValueFilter(
+                            "a".getBytes(),
+                            "event".getBytes(),
+                            CompareOperator.EQUAL,
+                            "{\"id\":{\"cs\":\"org.lable.audit.api-call\",\"code\":\"/api/v1/ou\"},\"happenedAt\":1630008292944,\"outcome\":{\"cs\":\"IETF/RFC3881.5.1.4\",\"code\":\"0\"},\"action\":{\"cs\":\"IETF/RFC3881.5.1.2\",\"code\":\"R\"}}".getBytes()
+                    ));
+
+            try (ResultScanner resultScanner = table.getScanner(scan)) {
+                for (Result result : resultScanner) {
+                    if (result.isCursor()) {
+                        System.out.println("C: " + Bytes.toStringBinary(result.getCursor().getRow()));
+                    } else {
+                        System.out.println("R: " + Bytes.toStringBinary(result.getRow()));
+                    }
+                }
+            }
+        }
+
+        System.out.println("Done");
+        long stop = System.currentTimeMillis();
+        long took = stop - start;
+        System.out.println("Took " + took);
+    }
+
+    @Test
+    @Ignore
+    public void cursorResumeTest() throws IOException {
+        Configuration conf = HBaseConfiguration.create();
+        conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
+        conf.set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, "1000");
+
+        TableName tableName = TableName.valueOf("audit", "care_loki");
+
+        SingleColumnValueFilter filter = new SingleColumnValueFilter(
+                "a".getBytes(),
+                "event".getBytes(),
+                CompareOperator.EQUAL,
+                "{\"id\":{\"cs\":\"org.lable.audit.api-call\",\"code\":\"/api/v1/ou\"},\"happenedAt\":1630008292944,\"outcome\":{\"cs\":\"IETF/RFC3881.5.1.4\",\"code\":\"0\"},\"action\":{\"cs\":\"IETF/RFC3881.5.1.2\",\"code\":\"R\"}}".getBytes()
+        );
+
+        long start = System.currentTimeMillis();
+        System.out.println("Scan");
+        try (
+                Connection hConnection = ConnectionFactory.createConnection(conf);
+                Table table = hConnection.getTable(tableName)
+        ) {
+            Scan scan = new Scan()
+                    .setLimit(1)
+                    .setNeedCursorResult(true)
+                    .setFilter(filter);
+
+            scan:
+            {
+                while (true) {
+                    singleScanner:
+                    {
+                        try (ResultScanner resultScanner = table.getScanner(scan)) {
+                            for (Result result : resultScanner) {
+                                if (result.isCursor()) {
+                                    Cursor cursor = result.getCursor();
+                                    System.out.println("C: " + Bytes.toStringBinary(cursor.getRow()));
+                                    scan = Scan
+                                            .createScanFromCursor(cursor)
+                                            .setNeedCursorResult(true)
+                                            .setFilter(filter)
+                                            .setLimit(1);
+                                    break singleScanner;
+                                } else {
+                                    System.out.println("R: " + Bytes.toStringBinary(result.getRow()));
+                                    break scan;
+                                }
+                            }
+                            System.out.println("Not found.");
+                            break scan;
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("Done");
+        long stop = System.currentTimeMillis();
+        long took = stop - start;
+        System.out.println("Took " + took);
+    }
+
+
+    @Test
+    @Ignore
     public void doubleIdentifierTest() throws IOException {
         AtomicLong uid = new AtomicLong();
 
@@ -64,7 +173,7 @@ public class HBaseAdapterTest {
         conf.set("hbase.zookeeper.quorum", "ntzka,ntzkb,ntzkc");
         conf.set("zookeeper.znode.parent", "/hbase-unsecure");
 
-        TableName tableName = TableName.valueOf("jeroen", "audit_test");
+        TableName tableName = TableName.valueOf("jeroen", "audit2");
 
         try (
                 Connection hConnection = ConnectionFactory.createConnection(conf);
@@ -154,7 +263,7 @@ public class HBaseAdapterTest {
                             throw new RuntimeException(e);
                         }
                     },
-                    logEntry -> TableName.valueOf("jeroen", "audit_test"),
+                    logEntry -> TableName.valueOf("jeroen", "audit2"),
                     () -> "a",
                     uid::getAndIncrement
             );

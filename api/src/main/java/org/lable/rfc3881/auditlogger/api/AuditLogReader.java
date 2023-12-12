@@ -15,8 +15,14 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import org.lable.rfc3881.auditlogger.api.querybuilder.AuditLogQuery;
+import org.lable.rfc3881.auditlogger.api.querybuilder.AuditLogQueryBuilder;
+import org.lable.rfc3881.auditlogger.api.querybuilder.FindFirstQuery;
+import org.lable.rfc3881.auditlogger.api.querybuilder.FindFirstQueryBuilder;
+
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Read log entries from the audit log.
@@ -54,6 +60,40 @@ public interface AuditLogReader {
      */
     default AuditLogQueryBuilder defineQuery(QueryLogger queryLogger) {
         return AuditLogQueryBuilder.define(this, queryLogger);
+    }
+
+
+    /**
+     * Find the first matching entry in the audit log.
+     *
+     * @param query The {@link FindFirstQuery}.
+     * @return Log entries.
+     */
+    default Optional<LogEntry> findFirst(FindFirstQuery query) throws IOException {
+        return findFirst(query, null);
+    }
+
+    /**
+     * Find the first matching entry in the audit log.
+     *
+     * @param query The {@link FindFirstQuery}.
+     * @param queryLogger Target for a log line describing the query performed.
+     * @return Log entries.
+     */
+    Optional<LogEntry> findFirst(FindFirstQuery query, QueryLogger queryLogger) throws IOException;
+
+    /**
+     * Start defining the query for finding the first entry.
+     */
+    default FindFirstQueryBuilder findFirst() {
+        return FindFirstQueryBuilder.define(this, null);
+    }
+
+    /**
+     * Start defining the query for finding the first entry.
+     */
+    default FindFirstQueryBuilder findFirst(QueryLogger queryLogger) {
+        return FindFirstQueryBuilder.define(this, queryLogger);
     }
 
     @FunctionalInterface

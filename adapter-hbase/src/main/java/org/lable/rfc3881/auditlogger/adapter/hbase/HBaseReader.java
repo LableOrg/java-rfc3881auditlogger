@@ -17,11 +17,9 @@ package org.lable.rfc3881.auditlogger.adapter.hbase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lable.codesystem.codereference.CodeReference;
@@ -32,6 +30,8 @@ import org.lable.oss.bitsandbytes.ByteMangler;
 import org.lable.oss.bitsandbytes.BytePrinter;
 import org.lable.rfc3881.auditlogger.api.*;
 import org.lable.rfc3881.auditlogger.api.Event.EventId;
+import org.lable.rfc3881.auditlogger.api.querybuilder.AuditLogQuery;
+import org.lable.rfc3881.auditlogger.api.querybuilder.FindFirstQuery;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter;
 import org.lable.rfc3881.auditlogger.hbase.AuditLogPrincipalFilter.FilterMode;
 import org.lable.rfc3881.auditlogger.serialization.ObjectMapperFactory;
@@ -45,7 +45,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -64,7 +63,7 @@ public class HBaseReader implements AuditLogReader {
 
     static ObjectMapper objectMapper;
 
-    private final Function<TableName, Table> hbaseConnection;
+    private final Supplier<Connection> hbaseConnection;
     private final Supplier<TableName> tableNameSetting;
     private final Supplier<String> columnFamilySetting;
 
@@ -76,7 +75,7 @@ public class HBaseReader implements AuditLogReader {
      * @param columnFamilySetting A supplier that returns the column family logs are stored in.
      */
     @Inject
-    public HBaseReader(@Named("hbase-connection") Function<TableName, Table> hbaseConnection,
+    public HBaseReader(@Named("hbase-connection") Supplier<Connection> hbaseConnection,
                        @Named("audit-table") Supplier<TableName> tableNameSetting,
                        @Named("audit-column-family") Supplier<String> columnFamilySetting) {
         this.hbaseConnection = hbaseConnection;
@@ -89,66 +88,13 @@ public class HBaseReader implements AuditLogReader {
      */
     @Override
     public List<LogEntry> read(AuditLogQuery query, QueryLogger queryLogger) throws IOException {
-        LogFilter filter = query.getFilter();
-
-        if (filter == null) filter = LogFilter.empty();
         byte[] cf = columnFamilySetting.get().getBytes(StandardCharsets.UTF_8);
 
         Scan scan = new Scan();
         scan.addFamily(cf);
 
         FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-
-        Referenceable eventId = filter.getEventId();
-        if (eventId != null) {
-            // Filter on event ID.
-            CodeReference cr = eventId.toCodeReference();
-            String codeSystem = Pattern.quote(cr.getCodeSystem());
-            String code = Pattern.quote(cr.getCode());
-            filters.addFilter(new RowFilter(
-                    CompareOperator.EQUAL,
-                    new RegexStringComparator(codeSystem + "\0" + code + "$")
-            ));
-        }
-
-        Set<String> principalFilters = filter.getPrincipalFilter();
-        if (principalFilters != null && !principalFilters.isEmpty()) {
-            // Filter on principal involved.
-            switch (filter.getPrincipalFilterType()) {
-                case EXACT:
-                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_PRINCIPAL, principalFilters));
-                    break;
-                case DOMAIN:
-                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_DOMAIN, principalFilters));
-                    break;
-                case DOMAIN_REGEX:
-                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_REGEX, principalFilters));
-                    break;
-                case DOMAIN_CONTAINS:
-                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_SUBSTRING, principalFilters));
-                    break;
-                case DOMAIN_STARTS_WITH:
-                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_PREFIX, principalFilters));
-                    break;
-            }
-        }
-
-        List<LogFilter.ObjectId> objectIds = filter.getParticipantObjectIds();
-        if (!objectIds.isEmpty()) {
-            FilterList objectFilterList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
-
-            for (LogFilter.ObjectId objectId : objectIds) {
-                objectFilterList.addFilter(
-                        mustIncludeParticipantObject(cf, "object", objectId.getTypeId(), objectId.getId())
-                );
-                objectFilterList.addFilter(
-                        mustIncludeParticipantObject(cf, "X-object", objectId.getTypeId(), objectId.getId())
-                );
-            }
-
-            filters.addFilter(objectFilterList);
-
-        }
+        addHbaseFiltersFromDefinition(filters, cf, query.getFilter());
 
         Instant from = query.getFromAsInstant();
         EventId fromEvent = query.getFromAsEventId();
@@ -192,7 +138,7 @@ public class HBaseReader implements AuditLogReader {
 
         long start = System.nanoTime();
         try (
-                Table table = hbaseConnection.apply(tableName);
+                Table table = hbaseConnection.get().getTable(tableName);
                 ResultScanner scanner = table.getScanner(scan)
         ) {
             Stream<LogEntry> stream = StreamSupport.stream(scanner.spliterator(), false)
@@ -249,19 +195,126 @@ public class HBaseReader implements AuditLogReader {
         }
     }
 
+    @Override
+    public Optional<LogEntry> findFirst(FindFirstQuery query, QueryLogger queryLogger) throws IOException {
+        byte[] cf = columnFamilySetting.get().getBytes(StandardCharsets.UTF_8);
+
+        FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
+        addHbaseFiltersFromDefinition(filters, cf, query.getFilter());
+
+        Instant from = query.getFrom();
+
+        // Define the initial scan.
+        Scan scan = new Scan();
+        if (from != null) {
+            scan = scan.withStartRow(getTimestampPrefix(from), true);
+        }
+
+        // Always limit to one; we just need the first one.
+        PageFilter pageFilter = new PageFilter(1);
+        filters.addFilter(pageFilter);
+
+        if (objectMapper == null) objectMapper = ObjectMapperFactory.getObjectMapper();
+
+        TableName tableName = tableNameSetting.get();
+        if (queryLogger != null) {
+            queryLogger.log("Scanning table " + tableName + " for the first matching record.");
+        }
+
+        Connection connection = hbaseConnection.get();
+        // Set the client timeout to 10s to prevent taking to long to close the ResultScanner.
+        String normalTimeout = connection.getConfiguration().get(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
+        connection.getConfiguration().set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, "10000");
+
+        long start = System.nanoTime();
+        Optional<LogEntry> optionalResult = Optional.empty();
+        try (Table table = connection.getTable(tableName)) {
+            findLoop:
+            while (true) {
+                scan = scan
+                        .setReversed(true)
+                        .setFilter(filters)
+                        // For this type of scan it is not unusual for the first record matching the filters supplied
+                        // to be quite some way into the table. To prevent timeouts and a lack of feedback in the logs we
+                        // request cursors (empty results) whenever the scanner timeout is reached.
+                        .setNeedCursorResult(true)
+                        .addFamily(cf);
+
+                try (ResultScanner scanner = table.getScanner(scan)) {
+                    for (Result result : scanner) {
+                        if (result.isCursor()) {
+                            // Continue from the cursor with a fresh ResultScanner.
+                            scan = Scan.createScanFromCursor(result.getCursor());
+                            if (queryLogger != null) {
+                                queryLogger.log("Scan timeout reached, continuing from cursor.");
+                            }
+                            continue findLoop;
+                        }
+
+                        Optional<LogEntry> logEntry = parseEntry(objectMapper, result, cf);
+                        if (logEntry.isEmpty()) {
+                            // Invalid data? Continue scanning using the current ResultScanner.
+                            if (queryLogger != null) {
+                                queryLogger.log("Found a row which could not be parsed: " + Bytes.toStringBinary(result.getRow()));
+                            }
+                            continue;
+                        }
+
+                        // Done. We found an entry.
+                        optionalResult = logEntry;
+
+                        break findLoop;
+                    }
+                    // Reached the end of the table, no record matching filters found.
+                    break findLoop;
+                }
+            }
+        } catch (
+                IOException e) {
+            // Log and rethrow.
+            if (queryLogger != null) {
+                queryLogger.log(
+                        "Querying " + tableName + " for first matching entry failed with IOException:\n"
+                                + query + "\nError: " + e.getMessage()
+                );
+            }
+            throw e;
+        } finally {
+            // Restore the normal timeout.
+            connection.getConfiguration().set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, normalTimeout);
+        }
+
+        long stop = System.nanoTime();
+        long took = (stop - start) / 1_000_000;
+        if (queryLogger != null) {
+            String outcome = optionalResult.isPresent() ? "Found record" : "Nothing found";
+            queryLogger.log(
+                    "Querying " + tableName + " for first matching entry:\n"
+                            + query + "\n" +
+                            outcome + "; took: " + took + " ms."
+            );
+        }
+
+        return optionalResult;
+    }
+
     public static byte[] getPrefixPlusOne(Instant at, EventId eventId) {
         return plusOne(getPrefix(at, eventId));
     }
 
     public static byte[] getPrefix(Instant at, EventId eventId) {
         if (at != null) {
-            return ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(at.toEpochMilli())));
+            return getTimestampPrefix(at);
         } else {
             return ByteMangler.add(
                     ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(eventId.getHappenedAt()))),
                     ByteConversion.fromLong(eventId.getUid())
             );
         }
+    }
+
+    public static byte[] getTimestampPrefix(Instant at) {
+        return ByteMangler.flip(flipTheFirstBit(Bytes.toBytes(at.toEpochMilli())));
     }
 
     public static Optional<LogEntry> parseEntry(ObjectMapper objectMapper, Result result, byte[] cf) {
@@ -306,21 +359,6 @@ public class HBaseReader implements AuditLogReader {
         ));
     }
 
-    Filter makePrincipalFilter(byte[] cf, FilterMode filterMode, Set<String> principalFilters) {
-        if (principalFilters.size() == 1) {
-            for (String principalFilter : principalFilters) {
-                // Set notoriously lacks a simple 'get()' for cases like these.
-                return new AuditLogPrincipalFilter(cf, filterMode, principalFilter);
-            }
-            throw new RuntimeException("Impossible situation.");
-        } else {
-            List<Filter> filters = principalFilters.stream()
-                    .map(f -> new AuditLogPrincipalFilter(cf, filterMode, f))
-                    .collect(Collectors.toList());
-            return new FilterList(FilterList.Operator.MUST_PASS_ONE, filters);
-        }
-    }
-
     static <T> List<T> readObjectsFromResult(ObjectMapper objectMapper,
                                              Class<T> objectType,
                                              NavigableMap<byte[], byte[]> columns,
@@ -355,6 +393,61 @@ public class HBaseReader implements AuditLogReader {
         return list;
     }
 
+    static void addHbaseFiltersFromDefinition(FilterList filters, byte[] cf, LogFilter filter) {
+        if (filter == null) return;
+
+        Referenceable eventId = filter.getEventId();
+        if (eventId != null) {
+            // Filter on event ID.
+            CodeReference cr = eventId.toCodeReference();
+            String codeSystem = Pattern.quote(cr.getCodeSystem());
+            String code = Pattern.quote(cr.getCode());
+            filters.addFilter(new RowFilter(
+                    CompareOperator.EQUAL,
+                    new RegexStringComparator(codeSystem + "\0" + code + "$")
+            ));
+        }
+
+        Set<String> principalFilters = filter.getPrincipalFilter();
+        if (principalFilters != null && !principalFilters.isEmpty()) {
+            // Filter on principal involved.
+            switch (filter.getPrincipalFilterType()) {
+                case EXACT:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_PRINCIPAL, principalFilters));
+                    break;
+                case DOMAIN:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.EXACT_DOMAIN, principalFilters));
+                    break;
+                case DOMAIN_REGEX:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_REGEX, principalFilters));
+                    break;
+                case DOMAIN_CONTAINS:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_SUBSTRING, principalFilters));
+                    break;
+                case DOMAIN_STARTS_WITH:
+                    filters.addFilter(makePrincipalFilter(cf, FilterMode.DOMAIN_PREFIX, principalFilters));
+                    break;
+            }
+        }
+
+        List<LogFilter.ObjectId> objectIds = filter.getParticipantObjectIds();
+        if (!objectIds.isEmpty()) {
+            FilterList objectFilterList = new FilterList(FilterList.Operator.MUST_PASS_ONE);
+
+            for (LogFilter.ObjectId objectId : objectIds) {
+                objectFilterList.addFilter(
+                        mustIncludeParticipantObject(cf, "object", objectId.getTypeId(), objectId.getId())
+                );
+                objectFilterList.addFilter(
+                        mustIncludeParticipantObject(cf, "X-object", objectId.getTypeId(), objectId.getId())
+                );
+            }
+
+            filters.addFilter(objectFilterList);
+
+        }
+    }
+
     static <T> T readObjectFromResult(ObjectMapper objectMapper,
                                       Class<T> objectType,
                                       NavigableMap<byte[], byte[]> columns,
@@ -386,7 +479,22 @@ public class HBaseReader implements AuditLogReader {
         return null;
     }
 
-    Filter mustIncludeParticipantObject(byte[] cf, String prefix, Referenceable typeId, String id) {
+    static Filter makePrincipalFilter(byte[] cf, FilterMode filterMode, Set<String> principalFilters) {
+        if (principalFilters.size() == 1) {
+            for (String principalFilter : principalFilters) {
+                // Set notoriously lacks a simple 'get()' for cases like these.
+                return new AuditLogPrincipalFilter(cf, filterMode, principalFilter);
+            }
+            throw new RuntimeException("Impossible situation.");
+        } else {
+            List<Filter> filters = principalFilters.stream()
+                    .map(f -> new AuditLogPrincipalFilter(cf, filterMode, f))
+                    .collect(Collectors.toList());
+            return new FilterList(FilterList.Operator.MUST_PASS_ONE, filters);
+        }
+    }
+
+    static Filter mustIncludeParticipantObject(byte[] cf, String prefix, Referenceable typeId, String id) {
         CodeReference cr = typeId.toCodeReference();
         byte[] cq = ByteMangler.add(
                 Bytes.toBytes(prefix),
@@ -400,7 +508,7 @@ public class HBaseReader implements AuditLogReader {
         return mustIncludeNonEmpty(cf, cq);
     }
 
-    Filter mustIncludeNonEmpty(byte[] cf, byte[] cq) {
+    static Filter mustIncludeNonEmpty(byte[] cf, byte[] cq) {
         SingleColumnValueFilter filter = new SingleColumnValueFilter(
                 cf,
                 cq,

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.lable.rfc3881.auditlogger.api;
+package org.lable.rfc3881.auditlogger.api.querybuilder;
 
 import org.lable.rfc3881.auditlogger.api.Event.EventId;
+import org.lable.rfc3881.auditlogger.api.LogFilter;
 
 import java.time.Instant;
 

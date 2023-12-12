@@ -86,13 +86,7 @@ public class RoundTripIT {
         );
 
         logReader = new HBaseReader(
-                tableName -> {
-                    try {
-                        return connection.getTable(tableName);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
+                () -> connection,
                 () -> AUDIT_TABLE,
                 () -> "a"
         );

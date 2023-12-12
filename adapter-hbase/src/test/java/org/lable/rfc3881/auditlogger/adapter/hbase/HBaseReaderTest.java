@@ -47,14 +47,8 @@ public class HBaseReaderTest {
         try (Connection hConnection = ConnectionFactory.createConnection(conf)) {
 
             AuditLogReader logReader = new HBaseReader(
-                    tableName -> {
-                        try {
-                            return hConnection.getTable(tableName);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    },
-                    () -> TableName.valueOf("jeroen", "audit"),
+                    () -> hConnection,
+                    () -> TableName.valueOf("audit", "care_loki"),
                     () -> "a"
             );
 
@@ -122,9 +116,9 @@ public class HBaseReaderTest {
 
 
             for (LogEntry log : logs) {
-                System.out.println(((UniqueEvent) log.getEvent()).toId());
+//                System.out.println(((UniqueEvent) log.getEvent()).toId());
 //                System.out.println("  " + (log.getRequestor() == null ? "-" : log.getRequestor().getUserId()));
-//                System.out.println(log.toString(options));
+                System.out.println(log.toString(options));
             }
         }
     }
