@@ -222,9 +222,9 @@ public class HBaseReader implements AuditLogReader {
         }
 
         Connection connection = hbaseConnection.get();
-        // Set the client timeout to 10s to prevent taking to long to close the ResultScanner.
+        // Set the client timeout to prevent taking to long to close the ResultScanner.
         String normalTimeout = connection.getConfiguration().get(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
-        connection.getConfiguration().set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, "10000");
+        connection.getConfiguration().set(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, "20000");
 
         long start = System.nanoTime();
         Optional<LogEntry> optionalResult = Optional.empty();
@@ -244,9 +244,18 @@ public class HBaseReader implements AuditLogReader {
                     for (Result result : scanner) {
                         if (result.isCursor()) {
                             // Continue from the cursor with a fresh ResultScanner.
-                            scan = Scan.createScanFromCursor(result.getCursor());
+                            Cursor cursor = result.getCursor();
+                            scan = Scan.createScanFromCursor(cursor);
                             if (queryLogger != null) {
-                                queryLogger.log("Scan timeout reached, continuing from cursor.");
+                                byte[] row = cursor.getRow();
+                                byte[] ts = ByteMangler.shrink(8, row);
+                                try {
+                                    long at = ByteConversion.toLong(ByteMangler.flipTheFirstBit(ByteMangler.flip(ts)));
+                                    queryLogger.log("Scan timeout reached, continuing from cursor of log at " +
+                                            Instant.ofEpochMilli(at) + ": " + Bytes.toStringBinary(row));
+                                } catch (ByteConversion.ConversionException | IndexOutOfBoundsException e) {
+                                    queryLogger.log("Scan timeout reached, continuing from cursor: " + Bytes.toStringBinary(row));
+                                }
                             }
                             continue findLoop;
                         }
