@@ -15,6 +15,9 @@
  */
 package org.lable.rfc3881.auditlogger.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 
 import java.util.Collections;
@@ -104,6 +107,27 @@ public class LogEntry implements Comparable<LogEntry> {
         this.auditSources = auditSources == null ? Collections.emptyList() : auditSources;
         this.participantObjects = participantObjects == null ? Collections.emptyList() : participantObjects;
         this.version = version;
+    }
+
+    @JsonCreator
+    private static LogEntry json(@JsonProperty("event") Event event,
+                                 @JsonProperty("requestor") Principal requestor,
+                                 @JsonProperty("delegator") Principal delegator,
+                                 @JsonProperty("participatingPrincipals") List<Principal> participatingPrincipals,
+                                 @JsonProperty("networkAccessPoint") NetworkAccessPoint networkAccessPoint,
+                                 @JsonProperty("auditSources") List<AuditSource> auditSources,
+                                 @JsonProperty("participantObjects") List<ParticipantObject> participantObjects,
+                                 @JsonProperty("version") CodeReference version) {
+        return new LogEntry(
+                event,
+                requestor,
+                delegator,
+                participatingPrincipals,
+                networkAccessPoint,
+                auditSources,
+                participantObjects,
+                version
+        );
     }
 
     /**
