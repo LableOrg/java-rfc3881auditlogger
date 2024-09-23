@@ -15,6 +15,7 @@
  */
 package org.lable.rfc3881.auditlogger.adapter.hbase;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.HConstants;
@@ -54,6 +55,7 @@ import java.util.stream.StreamSupport;
 import static org.lable.oss.bitsandbytes.ByteMangler.flipTheFirstBit;
 import static org.lable.oss.bitsandbytes.ByteMangler.plusOne;
 import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.INCOMPLETE_MARKER;
+import static org.lable.rfc3881.auditlogger.adapter.hbase.HBaseAdapter.columnQualifierSuffixFor;
 
 /**
  * Retrieves {@link LogEntry} written to HBase by {@link HBaseAdapter}.
@@ -354,6 +356,10 @@ public class HBaseReader implements AuditLogReader {
         List<ParticipantObject> participantObjects = readObjectsFromResult(
                 objectMapper, ParticipantObject.class, familyValues, row, "object"
         );
+        List<Detail> details = readDetailsFromResult(
+                objectMapper, familyValues, row
+        );
+
         CodeReference version = readObjectFromResult(objectMapper, CodeReference.class, familyValues, row, "version");
 
         return Optional.of(new LogEntry(
@@ -364,6 +370,7 @@ public class HBaseReader implements AuditLogReader {
                 accessPoint,
                 auditSources,
                 participantObjects,
+                details,
                 version
         ));
     }
@@ -400,6 +407,26 @@ public class HBaseReader implements AuditLogReader {
         }
 
         return list;
+    }
+
+    static List<Detail> readDetailsFromResult(ObjectMapper objectMapper,
+                                              NavigableMap<byte[], byte[]> columns,
+                                              byte[] row) {
+        byte[] value = columns.get(ByteConversion.fromString("details"));
+        if (value == null || value.length == 0) return Collections.emptyList();
+
+        try {
+            List<Detail> v = objectMapper.readValue(value, new TypeReference<List<Detail>>(){});
+            if (v != null) {
+                return v;
+            }
+        } catch (IOException e) {
+            logger.error(
+                    "Failed to parse byte value found in column details as List<Detail>. Row: {}.",
+                    BytePrinter.utf8Escaped(row)
+            );
+        }
+        return Collections.emptyList();
     }
 
     static void addHbaseFiltersFromDefinition(FilterList filters, byte[] cf, LogFilter filter) {

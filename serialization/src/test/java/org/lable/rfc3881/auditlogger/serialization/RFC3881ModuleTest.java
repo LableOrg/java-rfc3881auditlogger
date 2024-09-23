@@ -66,11 +66,12 @@ public class RFC3881ModuleTest {
                                 new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
                                 "Bob Jones",
                                 "TEST",
-                                new ParticipantObject.Detail(
+                                new Detail(
                                         new CodeReference("detail", "DT1", "Detail 1"),
                                         "DETAIL"
                                 ))
                 ),
+                null,
                 new CodeReference("version", "1", "1")
         );
 
@@ -159,7 +160,7 @@ public class RFC3881ModuleTest {
                 new CodeReference("sens", "very"),
                 "name",
                 "GET",
-                new ParticipantObject.Detail(new CodeReference("dt", "d"), "XXX")
+                new Detail(new CodeReference("dt", "d"), "XXX")
         );
 
         ObjectMapper objectMapper = testingObjectMapper();
@@ -183,7 +184,7 @@ public class RFC3881ModuleTest {
                 "name",
                 "GET",
                 false,
-                new ParticipantObject.Detail(new CodeReference("dt", "d"), "XXX")
+                new Detail(new CodeReference("dt", "d"), "XXX")
         );
 
         ObjectMapper objectMapper = testingObjectMapper();

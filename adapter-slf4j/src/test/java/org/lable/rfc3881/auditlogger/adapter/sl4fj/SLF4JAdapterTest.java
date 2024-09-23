@@ -55,7 +55,7 @@ public class SLF4JAdapterTest {
                                 new CodeReference("sensitivity", "TOPSECRET", "Quite secret"),
                                 "Bob Jones",
                                 "TEST",
-                                new ParticipantObject.Detail(
+                                new Detail(
                                         new CodeReference("detail", "DT1", "Detail 1"),
                                         "Detail"
                                 ))

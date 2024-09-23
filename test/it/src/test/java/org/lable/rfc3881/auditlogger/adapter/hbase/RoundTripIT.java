@@ -23,7 +23,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.configuration.BaseConfiguration;
 import org.apache.hadoop.hbase.shaded.org.apache.commons.configuration.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -172,8 +171,8 @@ public class RoundTripIT {
                                 new CodeReference("sens", "very"),
                                 "Some object 1",
                                 "GET",
-                                new ParticipantObject.Detail(new CodeReference("dt", "t"), "1"),
-                                new ParticipantObject.Detail(new CodeReference("dt", "t"), "2")
+                                new Detail(new CodeReference("dt", "t"), "1"),
+                                new Detail(new CodeReference("dt", "t"), "2")
                         ),
                         new ParticipantObject(
                                 "id2",
@@ -184,9 +183,13 @@ public class RoundTripIT {
                                 new CodeReference("sens", "not so"),
                                 "Some object 2",
                                 "GET",
-                                new ParticipantObject.Detail(new CodeReference("dt", "t"), "1"),
-                                new ParticipantObject.Detail(new CodeReference("dt", "t"), "2")
+                                new Detail(new CodeReference("dt", "t"), "1"),
+                                new Detail(new CodeReference("dt", "t"), "2")
                         )
+                ),
+                Arrays.asList(
+                        new Detail(new CodeReference("test", "X1"), "XXX"),
+                        new Detail(new CodeReference("test", "X2"), "ZZZ")
                 ),
                 new CodeReference("version", "1.0")
         );
@@ -206,6 +209,7 @@ public class RoundTripIT {
 
         assertThat(entryFullish.getParticipatingPrincipals().size(), is(2));
         assertThat(entryFullishOut.getParticipatingPrincipals().size(), is(2));
+        assertThat(entryFullishOut.getDetails().size(), is(2));
         assertThat(entryFullishOut.getParticipatingPrincipals(), is(entryFullish.getParticipatingPrincipals()));
 
         assertThat(entryFullish.getAuditSources().size(), is(3));

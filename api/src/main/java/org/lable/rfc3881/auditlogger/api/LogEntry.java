@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lable.codesystem.codereference.CodeReference;
 import org.lable.codesystem.codereference.Referenceable;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -82,6 +83,11 @@ public class LogEntry implements Comparable<LogEntry> {
     List<ParticipantObject> participantObjects;
 
     /**
+     * Implementation-defined data about specific details of this log entry.
+     */
+    List<Detail> details;
+
+    /**
      * Version of the audit logging implementation. Can be used to track the current implementation of
      * your audit logging. This may be useful when audit logging is gradually implemented or periodically reviewed,
      * and the breadth and scope of what is logged changes. Versioning the current status of implementation may aid
@@ -99,6 +105,18 @@ public class LogEntry implements Comparable<LogEntry> {
                     List<AuditSource> auditSources,
                     List<ParticipantObject> participantObjects,
                     Referenceable version) {
+        this(event, requestor, delegator, participatingPrincipals, networkAccessPoint, auditSources, participantObjects, null, version);
+    }
+
+    public LogEntry(Event event,
+                    Principal requestor,
+                    Principal delegator,
+                    List<Principal> participatingPrincipals,
+                    NetworkAccessPoint networkAccessPoint,
+                    List<AuditSource> auditSources,
+                    List<ParticipantObject> participantObjects,
+                    List<Detail> details,
+                    Referenceable version) {
         this.event = event;
         this.requestor = requestor;
         this.delegator = delegator;
@@ -106,8 +124,10 @@ public class LogEntry implements Comparable<LogEntry> {
         this.networkAccessPoint = networkAccessPoint;
         this.auditSources = auditSources == null ? Collections.emptyList() : auditSources;
         this.participantObjects = participantObjects == null ? Collections.emptyList() : participantObjects;
+        this.details = details == null ? Collections.emptyList() : details;
         this.version = version;
     }
+
 
     @JsonCreator
     private static LogEntry json(@JsonProperty("event") Event event,
@@ -117,6 +137,7 @@ public class LogEntry implements Comparable<LogEntry> {
                                  @JsonProperty("networkAccessPoint") NetworkAccessPoint networkAccessPoint,
                                  @JsonProperty("auditSources") List<AuditSource> auditSources,
                                  @JsonProperty("participantObjects") List<ParticipantObject> participantObjects,
+                                 @JsonProperty("details") List<Detail> details,
                                  @JsonProperty("version") CodeReference version) {
         return new LogEntry(
                 event,
@@ -126,6 +147,7 @@ public class LogEntry implements Comparable<LogEntry> {
                 networkAccessPoint,
                 auditSources,
                 participantObjects,
+                details,
                 version
         );
     }
@@ -184,6 +206,13 @@ public class LogEntry implements Comparable<LogEntry> {
     }
 
     /**
+     * @return A list of additional implementation-specific details for this log entry.
+     */
+    public List<Detail> getDetails() {
+        return details;
+    }
+
+    /**
      * @return The current version of the audit log implementation ({@link #version}).
      */
     public Referenceable getVersion() {
@@ -203,6 +232,7 @@ public class LogEntry implements Comparable<LogEntry> {
                 Objects.equals(this.networkAccessPoint, that.networkAccessPoint) &&
                 Objects.equals(this.auditSources, that.auditSources) &&
                 Objects.equals(this.participantObjects, that.participantObjects) &&
+                Objects.equals(this.details, that.details) &&
                 Objects.equals(this.version, that.version);
     }
 
@@ -210,7 +240,7 @@ public class LogEntry implements Comparable<LogEntry> {
     public int hashCode() {
         return Objects.hash(
                 event, requestor, delegator, participatingPrincipals, networkAccessPoint,
-                auditSources, participantObjects, version
+                auditSources, participantObjects, details, version
         );
     }
 
@@ -226,6 +256,7 @@ public class LogEntry implements Comparable<LogEntry> {
         String participantObjects = options.contains(ToStringOptions.TRUNCATE_PARTICIPANT_OBJECTS)
                 ? "(" + getParticipantObjects().size() + ")"
                 : join(getParticipantObjects());
+        String details = join(getDetails());
 
         return "AUDIT EVENT\n" +
                 "--------------------------------------------\n" +
@@ -242,6 +273,8 @@ public class LogEntry implements Comparable<LogEntry> {
                 join(getAuditSources()) + "\n" +
                 "[[   participant objects   ]]:\n" +
                 participantObjects + "\n" +
+                "[[   details   ]]:\n" +
+                details + "\n" +
                 "[[   version   ]]:\n" +
                 (getVersion() == null ? "unknown" : getVersion()) + "\n" +
                 "--------------------------------------------";

@@ -226,6 +226,7 @@ public class HBaseAdapterTest {
                                     null
                             )
                     ),
+                    null,
                     new CodeReference("version", "1", "1")
             );
 
@@ -298,6 +299,7 @@ public class HBaseAdapterTest {
                                         false
                                 )
                         ),
+                        null,
                         new CodeReference("version", "1", "1")
                 );
 
@@ -316,11 +318,11 @@ public class HBaseAdapterTest {
                 null,
                 randomName(),
                 null,
-                new ParticipantObject.Detail(
+                new Detail(
                         new CodeReference("org.lable.audit.ids", "legacy-key"),
                         "xxx-xxx-prod//k/" + randomLegacyKeyIsh("Account")
                 ),
-                new ParticipantObject.Detail(
+                new Detail(
                         new CodeReference("org.lable.audit.ids", "bsn"),
                         "926346347"
                 )
@@ -367,11 +369,11 @@ public class HBaseAdapterTest {
                 null,
                 "Bob van der Testdäta",
                 null,
-                new ParticipantObject.Detail(
+                new Detail(
                         new CodeReference("org.lable.audit.ids", "user"),
                         "xxx-xxx-prod//k/Account_0_a8855327e7f5414dbf8e480d2df88b0b"
                 ),
-                new ParticipantObject.Detail(
+                new Detail(
                         new CodeReference("org.lable.audit.ids", "user"),
                         "xxx-xxx-prod//u/bob.vandertestdata"
                 )
