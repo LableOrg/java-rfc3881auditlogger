@@ -26,7 +26,7 @@
 
   <groupId>org.lable.rfc3881.auditlogger</groupId>
   <artifactId>auditlogger</artifactId>
-  <version>2.9</version>
+  <version>2.10-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>IETF/RFC 3881 Audit Logger</name>
@@ -81,7 +81,7 @@
     <connection>scm:git:git@github.com:LableOrg/java-rfc3881auditlogger.git</connection>
     <developerConnection>scm:git:git@github.com:LableOrg/java-rfc3881auditlogger.git</developerConnection>
     <url>https://github.com/LableOrg/java-rfc3881auditlogger</url>
-    <tag>v2.9</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <dependencies>
