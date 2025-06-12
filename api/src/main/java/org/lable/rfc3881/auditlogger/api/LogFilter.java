@@ -162,19 +162,19 @@ public class LogFilter {
         }
 
 
-        private FilterBuilder principal(PrincipalFilterType principalFilterType, String item) {
+        public FilterBuilder principal(PrincipalFilterType principalFilterType, String item) {
             logFilter.principalFilter = Collections.singleton(item);
             logFilter.principalFilterType = principalFilterType;
             return this;
         }
 
-        private FilterBuilder principals(PrincipalFilterType principalFilterType, String... items) {
+        public FilterBuilder principals(PrincipalFilterType principalFilterType, String... items) {
             logFilter.principalFilter = new HashSet<>(Arrays.asList(items));
             logFilter.principalFilterType = principalFilterType;
             return this;
         }
 
-        private FilterBuilder principals(PrincipalFilterType principalFilterType, Collection<String> items) {
+        public FilterBuilder principals(PrincipalFilterType principalFilterType, Collection<String> items) {
             logFilter.principalFilter = new HashSet<>(items);
             logFilter.principalFilterType = principalFilterType;
             return this;
